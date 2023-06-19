@@ -36,6 +36,7 @@ if __name__ == "__main__":
 
     area_ref = []
     area = []
+    ppt = []
 
     # reference keypoints and descriptors
     ref_kpts, ref_des = load_descriptors(file)
@@ -110,20 +111,22 @@ if __name__ == "__main__":
         if len(area_ref) == 10:
             area_ref.pop(0)
             area.pop(0)
+            ppt.pop(0)
 
         area_ref.append(hull1.area)
         area.append(hull2.area)
+        ppt.append((hull1.area-hull2.area)/hull1.area)
         print("Reference:", np.mean(area_ref))
         print("Current:", np.mean(area))
+        print("PPT:", np.mean(ppt))
 
         if len(area_ref) < 10: continue
 
         cv2.imshow("frame", frame)
         
-        print((np.mean(area_ref) - np.mean(area))/np.mean(area_ref))
-
         # if (np.mean(area_ref) - np.mean(area))/np.mean(area_ref) > 0.05:
-        v = 6900 * (np.mean(area_ref) - np.mean(area))/np.mean(area_ref)
+        v = 6300 * np.mean(ppt)
+        v = 600 if v > 0 else -600
         w = 0
         u = np.array([v - w, v + w])
         u[u > 600.] = 600.
