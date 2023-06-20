@@ -18,11 +18,11 @@ pygame.init()
 display = pygame.display.set_mode((300, 300))
 
 def Forward():
-    command = 'CMD_MOTOR#450#450#450#450\n'
+    command = 'CMD_MOTOR#500#500#500#500\n'
     s.send(command.encode('utf-8'))
     
 def Backward():
-    command = 'CMD_MOTOR#-600#-600#-600#-600\n'
+    command = 'CMD_MOTOR#-800#-800#-800#-800\n'
     s.send(command.encode('utf-8'))
     
 def Left_Turn():

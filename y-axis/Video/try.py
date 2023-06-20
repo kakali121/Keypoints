@@ -126,7 +126,7 @@ if __name__ == "__main__":
         
         # if (np.mean(area_ref) - np.mean(area))/np.mean(area_ref) > 0.05:
         v = 6300 * np.mean(ppt)
-        v = 600 if v > 0 else -600
+        # v = 600 if v > 0 else -600
         w = 0
         u = np.array([v - w, v + w])
         u[u > 600.] = 600.
