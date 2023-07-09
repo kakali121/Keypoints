@@ -7,7 +7,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 WINDOW_T = 20
-VIDEO_FILE = '1.mp4'
+VIDEO_FILE = 'demo.mp4'
 IMAGE_FILE = '1.jpg'
 MAX_FRAMES = 500  # large numbers will cover the whole video
 SHORTEST_LENGTH = 5  # min 5
@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
     plot_kp_timeline(long_paths)
 
-    # save_kp_video(frames, frame_kps, long_paths)
+    save_kp_video(frames, frame_kps, long_paths)
     
     # ## Find descriptor - first frame
     time_kps = [time_descriptor(path, frame_kps, frame_des) for path in long_paths]

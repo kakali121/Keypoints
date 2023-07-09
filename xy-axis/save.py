@@ -2,9 +2,11 @@ import cv2
 import math
 import time
 import numpy as np
+from scipy.spatial import ConvexHull
 
-MAX_FRAMES = 600  # large numbers will cover the whole video
-INTERVAL = 100 # 150 frames per inverval
+MAX_FRAMES = 300  # large numbers will cover the whole video
+INTERVAL = 50 # 150 frames per inverval
+MAX_MATCH_DISTANCE = 50  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
 orb = cv2.ORB_create()
@@ -59,12 +61,15 @@ def save_kpt_des(keypoints, descriptors, filename):
 
 
 def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
+    # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 10
     out = cv2.VideoWriter(video, fourcc, fps, (400, 300))
+
     kpts_cur, des_cur = [], []
     kpts_fin, des_fin = [], []
     k = INTERVAL
+
     while k > 0:
         k -= 1
         if k == INTERVAL - 1:
@@ -76,16 +81,20 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
         else:
             kpts_cur = keypoints[k] #current frame keypoints
             des_cur = descriptors[k] #current frame descriptors
+        
         if descriptors is None:
             print("No keypoints/descriptors in frame")
             continue
+
         matches = bf.match(des_fin, descriptors[k])
-        matches = sorted(matches, key=lambda x: x.distance)
-        # matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
+        # matches = sorted(matches, key=lambda x: x.distance)
+        matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
+
         kpts_cur_temp = []
         des_cur_temp = []
         kpts_fin_temp = []
         des_fin_temp = []
+
         for match in matches:
             query_idx = match.queryIdx
             kpts_fin_temp.append(kpts_fin[query_idx])
@@ -93,21 +102,44 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
             train_idx = match.trainIdx
             kpts_cur_temp.append(kpts_cur[train_idx])
             des_cur_temp.append(des_cur[train_idx])
+
         kpts_fin, des_fin = [], []
         kpts_fin = np.array(kpts_fin_temp)
         des_fin = np.array(des_fin_temp)
+
         kpts_cur, des_cur = [], []
         kpts_cur = np.array(kpts_cur_temp)
         des_cur = np.array(des_cur_temp)
+
         print("Final Keypoints:", len(kpts_fin))
+
         frame[k] = cv2.drawKeypoints(frame[k], kpts_cur, None, color = (255, 0, 0), flags=0)
         frame[k] = cv2.drawKeypoints(frame[k], kpts_fin, None, color=(0, 255, 0), flags=0)
+
+        pt1s = []
+        pt2s = []
+
         for i in range(len(kpts_fin)):
             pt1 = np.int32(kpts_fin[i].pt)
             pt2 = np.int32(kpts_cur[i].pt)
+            pt1s.append(pt1)
+            pt2s.append(pt2)
             frame[k] = cv2.line(frame[k], pt1, pt2, (0, 0, 255), thickness=2)
+
+        if len(pt1s) > 2 and len(pt2s) > 2:
+            # Compute the convex hulls
+            hull1 = ConvexHull(np.array(pt1s))
+            hull2 = ConvexHull(np.array(pt2s))
+            # Convert hull points to the correct format for cv2.drawContours()
+            hull1_points = np.array(pt1s)[hull1.vertices]
+            hull2_points = np.array(pt2s)[hull2.vertices]
+            # Draw the contours on the frame
+            cv2.drawContours(frame[k], [hull1_points], -1, (255, 255, 0), 3) # color blue
+            cv2.drawContours(frame[k], [hull2_points], -1, (255, 0, 255), 3) # color pink
+
         cv2.imshow("frame", frame[k])
         out.write(frame[k])
+
         if k == 0:
             save_kpt_des(kpts_fin, des_fin, filename)
         # Wait for Esc key to stop
@@ -121,7 +153,7 @@ if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints("demo.mp4")
     for i in range(int(len(frames)/INTERVAL)):
         print("Interval", i)
-        analyze_kpt_des(frames, frame_kpt, frame_des, "demo_kpt_des/demo_kpt_des%d.yml"%(i+1), "demo_kpt_des/demo%d.mp4"%(i+1))
+        analyze_kpt_des(frames, frame_kpt, frame_des, "demo_kpt_des1/demo_kpt_des%d.yml"%(i+1), "demo_kpt_des/demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
         frame_des = frame_des[-(len(frame_des)-INTERVAL):]

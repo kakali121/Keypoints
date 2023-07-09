@@ -71,7 +71,6 @@ if __name__ == "__main__":
         # print("Average distance 1:", np.mean(distances))
         # print("Average x diff 1:", np.mean(x_diff))
         # print(len(matches))
-        average = np.mean(distances)
 
         matches = sorted(matches, key=lambda x: x.distance)
         n = int(0.8*len(matches))

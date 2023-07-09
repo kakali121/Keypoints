@@ -5,6 +5,7 @@ import numpy as np
 
 MAX_FRAMES = 600  # large numbers will cover the whole video
 INTERVAL = 150 # 150 frames per inverval
+MAX_MATCH_DISTANCE = 50 
 
 # Create an ORB object and detect keypoints and descriptors in the template
 orb = cv2.ORB_create()
@@ -80,8 +81,8 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
             print("No keypoints/descriptors in frame")
             continue
         matches = bf.match(des_fin, descriptors[k])
-        matches = sorted(matches, key=lambda x: x.distance)
-        # matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
+        # matches = sorted(matches, key=lambda x: x.distance)
+        matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
         kpts_cur_temp = []
         des_cur_temp = []
         kpts_fin_temp = []

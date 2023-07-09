@@ -51,7 +51,6 @@ if __name__ == "__main__":
         des_match = []
         kpt_ref = []
         des_ref = []
-        distances = []
         x_diff = []
 
         for match in matches:
@@ -61,21 +60,15 @@ if __name__ == "__main__":
             train_idx = match.trainIdx
             kpt_match.append(keypoints[train_idx])
             des_match.append(descriptors[train_idx])
-            distances.append(match.distance)
-            # print(ref_kpts[query_idx])
             x_diff.append(ref_kpts[query_idx][0] - keypoints[match.trainIdx].pt[0])
-
-        average = np.mean(distances)
 
         matches = sorted(matches, key=lambda x: x.distance)
         n = int(0.7*len(matches))
         matches = matches[:n]
         
-        distances = []
         x_diff = []
 
         for match in matches:
-            distances.append(match.distance)
             x_diff.append(ref_kpts[match.queryIdx][0] - keypoints[match.trainIdx].pt[0])
 
         x = np.mean(x_diff)
