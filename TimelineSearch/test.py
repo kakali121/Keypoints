@@ -238,51 +238,37 @@ def plot_kp_timeline(paths):
 
 
 if __name__ == "__main__":
-    start = time.time()
 
     # ## Extract keypoints
     frame_kps, frame_des, frames = extract_keypoints(VIDEO_FILE, max_frames=MAX_FRAMES)
-    exkp = time.time()
-    print('Extract keypoint:', exkp - start)
 
     # ## Find sequential match
     G = sequential_matches_graph(frame_des, WINDOW_T)
     print("Number of nodes:", G.number_of_nodes())
     print("Number of edges:", G.number_of_edges())
-    fsm = time.time()
-    print('Find sequential match:', fsm - exkp)
 
     # ## Find the long paths 
     long_paths = find_long_paths_T(G)
-    flp = time.time()
-    print('Find long path:', flp - fsm)
 
+    # ## Plot keypoint timeline
     plot_kp_timeline(long_paths)
 
+    # ## Save video with keypoints
     save_kp_video(frames, frame_kps, long_paths)
     
     # ## Find descriptor - first frame
     time_kps = [time_descriptor(path, frame_kps, frame_des) for path in long_paths]
-    fd = time.time()
-    print('Find descriptor:', fd - flp)
 
     # ## Make time interval
     times = find_times(time_kps)
-    mt =  time.time()
-    print('Make time interval:', mt - fd)
-    # print(times)
 
     # ## Find interval descriptor
-    intervals_in_sequence = descriptors_per_interval(times, time_kps, frame_kps, frame_des)
+    intervals_in_sequence = descriptors_per_interval(times, time_kps, frame_kps, frame_des, plot=True)
     print("Number of intervals:", len(intervals_in_sequence))
-    fis = time.time()
-    print('Find interval descriptor:', fis - mt)
 
     # ## Read image
     img_keypoints, img_descriptors, img = keypoints_from_image_file(IMAGE_FILE)
     # img_keypoints, img_descriptors, img = frame_kps[20], frame_des[20], frames[20]
-    kfi = time.time()
-    print('Keypoints from image:', kfi - fis)
 
     # find the interval that matches the most with the image descriptors
     sum_distances = []
@@ -292,7 +278,6 @@ if __name__ == "__main__":
     best_kpts = None
     best_des = None
 
-    find = time.time()
     for i, (s, e, kpts, descriptors) in enumerate(intervals_in_sequence):
         matches = bf.match(img_descriptors, descriptors)
         # matches = sorted(matches, key=lambda x: x.distance)
@@ -306,12 +291,9 @@ if __name__ == "__main__":
             best_kpts = kpts
             best_des = descriptors
             # print("len best match", len(best_match))
-    found = time.time()
-    print(i)
-    print('Find best match:', found - find)
     # print(sum_distances)
-    x = np.hstack([(s,e) for (s, e, kpts, img_descriptors) in intervals_in_sequence])
-    y = np.hstack([(dist,dist) for dist in sum_distances])
+    x = np.hstack([(s, e) for (s, e, kpts, img_descriptors) in intervals_in_sequence])
+    y = np.hstack([(dist, dist) for dist in sum_distances])
     plt.plot(x, y, '-')
     for (s, e, kpts, img_descriptors), dist in zip(intervals_in_sequence, sum_distances):
         x = [s,e]
