@@ -5,8 +5,8 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 MAX_FRAMES = 300  # large numbers will cover the whole video
-INTERVAL = 50 # 150 frames per inverval
-MAX_MATCH_DISTANCE = 50  # match threshold
+INTERVAL = 6 # 150 frames per inverval
+MAX_MATCH_DISTANCE = 20  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
 orb = cv2.ORB_create()
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints("demo.mp4")
     for i in range(int(len(frames)/INTERVAL)):
         print("Interval", i)
-        analyze_kpt_des(frames, frame_kpt, frame_des, "demo_kpt_des1/demo_kpt_des%d.yml"%(i+1), "demo_kpt_des/demo%d.mp4"%(i+1))
+        analyze_kpt_des(frames, frame_kpt, frame_des, "demo_kpt_des2/demo_kpt_des%d.yml"%(i+1), "demo_kpt_des2/demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
         frame_des = frame_des[-(len(frame_des)-INTERVAL):]

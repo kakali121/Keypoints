@@ -5,7 +5,7 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture("http://192.168.0.204:1234/stream.mjpg")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 10
-    out = cv2.VideoWriter('demo1.mp4', fourcc, fps, (400, 300))
+    out = cv2.VideoWriter('demo2.mp4', fourcc, fps, (400, 300))
     while cap.isOpened():
         # Read a frame from the video
         ret, frame = cap.read()

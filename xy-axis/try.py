@@ -6,13 +6,11 @@ from scipy.spatial import ConvexHull
 import socket
 
 IP_ADDRESS = '192.168.0.204'
-
-file = "demo_kpt_des1/demo_kpt_des4.yml"
-
-MAX_MATCH_DISTANCE = 60  # match threshold
+file = "demo_kpt_des2/demo_kpt_des30.yml"
+MAX_MATCH_DISTANCE = 50  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
-orb = cv2.ORB_create(100)
+orb = cv2.ORB_create(500)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
@@ -25,20 +23,7 @@ def load_descriptors(file_name):
     return keypoints, descriptors
 
 
-def remove_dup_coord(points):
-    new_points = []
-    list_x = []
-    list_y = []
-    for point in points:
-        if point[0] not in list_x and point[1] not in list_y:
-            new_points.append(point)
-            list_x.append(point[0])
-            list_y.append(point[1])
-    return new_points
-
-
 if __name__ == "__main__":
-
     # Connect to the robot
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((IP_ADDRESS, 5000))
@@ -118,8 +103,8 @@ if __name__ == "__main__":
                 frame = cv2.circle(frame, center, 4, (255, 0, 0), -1) # color blue
                 frame = cv2.line(frame, pt2, center, (0, 0, 255), thickness=2) # color red
 
-        pt1s = remove_dup_coord(pt1s)
-        pt2s = remove_dup_coord(pt2s)
+        # pt1s = remove_dup_coord(pt1s)
+        # pt2s = remove_dup_coord(pt2s)
 
         if len(pt1s) < 3: 
             command = 'CMD_MOTOR#00#00#00#00\n'
@@ -131,8 +116,8 @@ if __name__ == "__main__":
             continue
 
         # Compute the convex hulls
-        hull1 = ConvexHull(pt1s)
-        hull2 = ConvexHull(pt2s)
+        hull1 = ConvexHull(pt1s, qhull_options='QJ')
+        hull2 = ConvexHull(pt2s, qhull_options='QJ')
 
         # Convert hull points to the correct format for cv2.drawContours()
         hull1_points = np.array(pt1s)[hull1.vertices]
@@ -158,12 +143,12 @@ if __name__ == "__main__":
 
         cv2.imshow("frame", frame)
         
-        v = 23 * -x
+        v = 33 * -x
         # v = 700 if v > 0 else -700
         if (np.mean(ppt) > 0):
-            w = 4500 * (np.mean(ppt) - 0.1)
+            w = 1500 * (np.mean(ppt) - 0.1)
         else:
-            w = -4500 * (np.mean(ppt) - 0.1)
+            w = -1500 * (np.mean(ppt) - 0.1)
 
         u = np.array([v - w, v + w])
         u[u > 700.] = 700.
@@ -173,7 +158,7 @@ if __name__ == "__main__":
         s.send(command.encode('utf-8'))
         print(command)
 
-        # Wait for Esc key to stop
+        # Wait for Q key to stop
         if cv2.waitKey(1) == ord('q'):
             # De-allocate any associated memory usage
             cv2.destroyAllWindows()
@@ -184,3 +169,15 @@ if __name__ == "__main__":
 
     command = 'CMD_MOTOR#00#00#00#00\n'
     s.send(command.encode('utf-8'))
+
+
+# def remove_dup_coord(points):
+#     new_points = []
+#     list_x = []
+#     list_y = []
+#     for point in points:
+#         if point[0] not in list_x and point[1] not in list_y:
+#             new_points.append(point)
+#             list_x.append(point[0])
+#             list_y.append(point[1])
+#     return new_points

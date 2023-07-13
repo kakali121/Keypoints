@@ -18,13 +18,7 @@ bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 def keypoints_from_image_file(image_file):
     img = cv2.imread(image_file)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect keypoints and compute descriptors in the frame
     keypoints, des = orb.detectAndCompute(gray, None)
-    # print(keypoints)
-    # img_with_keypoints = cv2.drawKeypoints(img, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    # Display the image with keypoints
-    # plt.imshow(img_with_keypoints)
-    # plt.show()
     return keypoints, des, img
 
 
