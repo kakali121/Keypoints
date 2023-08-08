@@ -94,7 +94,7 @@ def get_ref_ret_coordinates(kpt_ref, kpt_ret, img, draw=False):
         pt2s.append(pt2)
         if draw:
             img = cv2.circle(img, pt1, 4, (255, 0, 0), -1) # blue matched reference keypoints
-            img = cv2.line(img, pt 2, pt1, (255, 255, 0), thickness=2) # red matched robot keypoints
+            img = cv2.line(img, pt2, pt1, (255, 255, 0), thickness=2) # red matched robot keypoints
     pt1s = np.array(pt1s)
     pt2s = np.array(pt2s)
     return pt1s, pt2s, img

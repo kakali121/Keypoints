@@ -15,6 +15,7 @@ orb = cv2.ORB_create()
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
+
 def keypoints_from_image_file(image_file):
     img = cv2.imread(image_file)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -72,6 +73,7 @@ def draw_match(best_interval, img_keypoints):
     #
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     # Load the ORB feature detector and descriptor from the image
