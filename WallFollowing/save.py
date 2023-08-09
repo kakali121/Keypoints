@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 MAX_FRAMES = 1300  # large numbers will cover the whole video
-INTERVAL = 13 # 5 frames per inverval
+INTERVAL = 13 # 13 frames per inverval 
 MAX_MATCH_DISTANCE = 50  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -149,8 +149,8 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
 if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints(VIDEO)
     for i in range(int(len(frames)/INTERVAL)):
-        print("Interval", i)
-        analyze_kpt_des(frames, frame_kpt, frame_des, "side_demo_kpt_des/demo_kpt_des%d.yml"%(i+1), "side_demo/demo%d.mp4"%(i+1))
+        print("Interval", i+1)
+        analyze_kpt_des(frames, frame_kpt, frame_des, "side_demo_kpt_des/side_demo_kpt_des%d.yml"%(i+1), "side_demo/side_demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
         frame_des = frame_des[-(len(frame_des)-INTERVAL):]

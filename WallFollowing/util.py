@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-08 16:09:16
 LastEditors  : Karen Li
-LastEditTime : 2023-08-08 17:34:09
+LastEditTime : 2023-08-09 17:39:08
 FilePath     : /WallFollowing/util.py
 Description  : 
 '''
@@ -31,8 +31,8 @@ def find_kpt_des(img, draw=False):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kpts, des = orb.detectAndCompute(gray, None)
     if draw: 
-        img = cv2.drawKeypoints(img, kpts, None, color=(0, 0, 255), 
-                                flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT) # Red keypoints
+        img = cv2.drawKeypoints(img, kpts, None, color=(0, 255, 0), 
+                                flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT) # Green keypoints
     return kpts, des, img   
 
 
@@ -94,13 +94,15 @@ def find_best_interval(img_descriptors, dir_name: str) -> int:
         )
         # match the descriptors with the image
         matches = bf.match(img_descriptors, descriptors)
+        if len(matches) == 0:
+            continue
         # cummulate the average hamming distance for each interval match
         ave_sum_distance = sum([m.distance for m in matches]) / len(matches)
         ave_sum_distances.append(ave_sum_distance)
         # find the best match with the least distance
         if ave_sum_distance <= best_sq_dist:
             best_sq_dist = ave_sum_distance
-            best_interval = i
+            best_interval = i+1
     return best_interval
 
 
