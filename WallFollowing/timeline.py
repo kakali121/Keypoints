@@ -7,9 +7,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 WINDOW_T = 20
-VIDEO_FILE = 'demoS.mp4'
+VIDEO_FILE = 'sidedemo.mp4'
 IMAGE_FILE = '1.jpg'
-MAX_FRAMES = 1500  # large numbers will cover the whole video
+MAX_FRAMES = 2000  # large numbers will cover the whole video
 SHORTEST_LENGTH = 5  # min 5
 MAX_MATCH_DISTANCE = 15  # match threshold
 
@@ -17,6 +17,7 @@ MAX_MATCH_DISTANCE = 15  # match threshold
 orb = cv2.ORB_create()
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
 
 def keypoints_from_image_file(image_file):
     img = cv2.imread(image_file)
@@ -80,7 +81,9 @@ def find_long_paths_T(G):
                 oldest_v = u
         if oldest_v is None:
             continue
-        path = nx.shortest_path(G, source=oldest_v, target=v)  # FIXME Switch to longest path
+        path = nx.shortest_path(
+            G, source=oldest_v, target=v
+        )  # FIXME Switch to longest path
         paths.append(path)
     # Find the paths with length greater than a threshhold. remove the source and sink nodes.
     long_paths = [p for p in paths if len(p) >= SHORTEST_LENGTH]
@@ -161,7 +164,7 @@ def extract_keypoints(video, max_frames):
 def time_descriptor(path, frame_kpts, frame_des):
     start = path[0][0]
     end = path[-1][0]
-    #TODO include x and y
+    # TODO include x and y
     descriptor = None
     # first element in path
     t, kp_id = path[0]
@@ -178,7 +181,8 @@ def kp_path(frame_kps, path, time_stop=-1):
         # print(kp.pt)
         x.append(kp.pt[0])
         y.append(kp.pt[1])
-        if t >= time_stop: break
+        if t >= time_stop:
+            break
     return x, y
 
 
@@ -195,10 +199,10 @@ def time_in_path(time, path, frame_kps):
 
 def save_kp_video(frames, frame_kps, kp_paths):
     intervals = [(path[0][0], path[-1][0]) for path in kp_paths]
-    color_paths= [tuple(map(int, np.random.randint(0, 255, size=3))) for _ in kp_paths]
+    color_paths = [tuple(map(int, np.random.randint(0, 255, size=3))) for _ in kp_paths]
     # Create a VideoWriter object to save the output video
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    width  = len(frames[0][0])
+    width = len(frames[0][0])
     height = len(frames[0])
     # print(width, height)
     fps = 15
@@ -209,7 +213,7 @@ def save_kp_video(frames, frame_kps, kp_paths):
                 continue
             path = kp_paths[i]
             x, y = kp_path(frame_kps, path, t)
-            cv_path = np.array([point for point in zip(x,y)], dtype=np.int32)
+            cv_path = np.array([point for point in zip(x, y)], dtype=np.int32)
             # Generate a random color for the polyline
             color = color_paths[i]
             # Draw
@@ -225,20 +229,21 @@ def save_kp_video(frames, frame_kps, kp_paths):
     out.release()
 
 
-def plot_kp_timeline(paths):
+def plot_kp_timeline(paths: list, save_plot=True) -> None:
     intervals = [(path[0][0], path[-1][0]) for path in paths]
     for i, (start, end) in enumerate(intervals):
         plt.plot([start, end], [i, i])
-
     plt.title("Keypoint timeline")
     plt.xlabel("Frame number")
     plt.ylabel("Keypoint id")
     plt.grid()
-    plt.show()
 
+    if save_plot:
+        plt.savefig("timeline.png")
+    else:
+        plt.show()
 
 if __name__ == "__main__":
-
     # ## Extract keypoints
     frame_kps, frame_des, frames = extract_keypoints(VIDEO_FILE, max_frames=MAX_FRAMES)
 
@@ -247,15 +252,15 @@ if __name__ == "__main__":
     print("Number of nodes:", G.number_of_nodes())
     print("Number of edges:", G.number_of_edges())
 
-    # ## Find the long paths 
+    # ## Find the long paths
     long_paths = find_long_paths_T(G)
 
     # ## Plot keypoint timeline
     plot_kp_timeline(long_paths)
 
     # ## Save video with keypoints
-    save_kp_video(frames, frame_kps, long_paths)
-    
+    # save_kp_video(frames, frame_kps, long_paths)
+
     # ## Find descriptor - first frame
     time_kps = [time_descriptor(path, frame_kps, frame_des) for path in long_paths]
 
@@ -263,78 +268,81 @@ if __name__ == "__main__":
     times = find_times(time_kps)
 
     # ## Find interval descriptor
-    intervals_in_sequence = descriptors_per_interval(times, time_kps, frame_kps, frame_des, plot=True)
+    intervals_in_sequence = descriptors_per_interval(
+        times, time_kps, frame_kps, frame_des, plot=True
+    )
     print("Number of intervals:", len(intervals_in_sequence))
 
-    # ## Read image
-    img_keypoints, img_descriptors, img = keypoints_from_image_file(IMAGE_FILE)
-    # img_keypoints, img_descriptors, img = frame_kps[20], frame_des[20], frames[20]
+    #### Find best match ################################################################################
 
-    # find the interval that matches the most with the image descriptors
-    sum_distances = []
-    best_match = None
-    best_interval_id = -1
-    best_sq_dist = math.inf
-    best_kpts = None
-    best_des = None
+    # # ## Read image
+    # img_keypoints, img_descriptors, img = keypoints_from_image_file(IMAGE_FILE)
+    # # img_keypoints, img_descriptors, img = frame_kps[20], frame_des[20], frames[20]
 
-    for i, (s, e, kpts, descriptors) in enumerate(intervals_in_sequence):
-        matches = bf.match(img_descriptors, descriptors)
-        # matches = sorted(matches, key=lambda x: x.distance)
-        # print(s, e, len(matches))
-        sum_distance = sum([m.distance for m in matches]) / len(matches)
-        sum_distances.append(sum_distance)
-        if sum_distance <= best_sq_dist:
-            best_match = matches
-            best_sq_dist = sum_distance
-            best_interval_id = i
-            best_kpts = kpts
-            best_des = descriptors
-            # print("len best match", len(best_match))
-    # print(sum_distances)
-    x = np.hstack([(s, e) for (s, e, kpts, img_descriptors) in intervals_in_sequence])
-    y = np.hstack([(dist, dist) for dist in sum_distances])
-    plt.plot(x, y, '-')
-    for (s, e, kpts, img_descriptors), dist in zip(intervals_in_sequence, sum_distances):
-        x = [s,e]
-        # print(x)
-        y = [dist, dist]
-        plt.plot(x,y)
-    # plt.plot(sum_distances)
-    plt.title("Average distance of descriptors in interval")
-    plt.show()
+    # # find the interval that matches the most with the image descriptors
+    # sum_distances = []
+    # best_match = None
+    # best_interval_id = -1
+    # best_sq_dist = math.inf
+    # best_kpts = None
+    # best_des = None
 
-    # best interval
-    bs, be, bkpts, bdess = intervals_in_sequence[best_interval_id]
-
-    # best_frame = frames[bs]
-    # best_kpts = frame_kps[bs]
-    # bdess = frame_des[bs]
-    # best_kpts = frame_kps[bs]
-    # best_match = bf.match(img_descriptors, bdess)
-    print('Number of best matches', len(best_match), " time =", bs, "to", be)
-    # best_match = sorted(best_match, key=lambda x: x.distance)[:50]
-    # frame_matches = cv2.drawMatches(img, img_keypoints, best_frame, best_kpts, best_match, None,
-    #                                 flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    # # Plot best
-    # plt.imshow(frame_matches)
-    # for match in best_match:
-    #     # Get the keypoints from the matches
-    #     img1_idx = match.queryIdx
-    #     img2_idx = match.trainIdx
-    #     (x1, y1) = img_keypoints[img1_idx].pt
-    #     (x2, y2) = best_kpts[img2_idx].pt
-
-    #     # Draw a line between the keypoints with thicker line width
-    #     plt.plot([x1, x2 + img.shape[1]], [y1, y2], linewidth=2, alpha=0.8)
-
-    # # Display the frame with matches
-    # # cv2.imshow('Frame with matches', frame_matches)
-    # #
-    # # cv2.waitKey(0)
-    # # cv2.destroyAllWindows()
-
-    # # break
+    # for i, (s, e, kpts, descriptors) in enumerate(intervals_in_sequence):
+    #     matches = bf.match(img_descriptors, descriptors)
+    #     # matches = sorted(matches, key=lambda x: x.distance)
+    #     # print(s, e, len(matches))
+    #     sum_distance = sum([m.distance for m in matches]) / len(matches)
+    #     sum_distances.append(sum_distance)
+    #     if sum_distance <= best_sq_dist:
+    #         best_match = matches
+    #         best_sq_dist = sum_distance
+    #         best_interval_id = i
+    #         best_kpts = kpts
+    #         best_des = descriptors
+    #         # print("len best match", len(best_match))
+    # # print(sum_distances)
+    # x = np.hstack([(s, e) for (s, e, kpts, img_descriptors) in intervals_in_sequence])
+    # y = np.hstack([(dist, dist) for dist in sum_distances])
+    # plt.plot(x, y, '-')
+    # for (s, e, kpts, img_descriptors), dist in zip(intervals_in_sequence, sum_distances):
+    #     x = [s,e]
+    #     # print(x)
+    #     y = [dist, dist]
+    #     plt.plot(x,y)
+    # # plt.plot(sum_distances)
+    # plt.title("Average distance of descriptors in interval")
     # plt.show()
-    # print(len(time_kps))
 
+    # # best interval
+    # bs, be, bkpts, bdess = intervals_in_sequence[best_interval_id]
+
+    # # best_frame = frames[bs]
+    # # best_kpts = frame_kps[bs]
+    # # bdess = frame_des[bs]
+    # # best_kpts = frame_kps[bs]
+    # # best_match = bf.match(img_descriptors, bdess)
+    # print('Number of best matches', len(best_match), " time =", bs, "to", be)
+    # # best_match = sorted(best_match, key=lambda x: x.distance)[:50]
+    # # frame_matches = cv2.drawMatches(img, img_keypoints, best_frame, best_kpts, best_match, None,
+    # #                                 flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    # # # Plot best
+    # # plt.imshow(frame_matches)
+    # # for match in best_match:
+    # #     # Get the keypoints from the matches
+    # #     img1_idx = match.queryIdx
+    # #     img2_idx = match.trainIdx
+    # #     (x1, y1) = img_keypoints[img1_idx].pt
+    # #     (x2, y2) = best_kpts[img2_idx].pt
+
+    # #     # Draw a line between the keypoints with thicker line width
+    # #     plt.plot([x1, x2 + img.shape[1]], [y1, y2], linewidth=2, alpha=0.8)
+
+    # # # Display the frame with matches
+    # # # cv2.imshow('Frame with matches', frame_matches)
+    # # #
+    # # # cv2.waitKey(0)
+    # # # cv2.destroyAllWindows()
+
+    # # # break
+    # # plt.show()
+    # # print(len(time_kps))

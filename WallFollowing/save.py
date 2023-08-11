@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-MAX_FRAMES = 1300  # large numbers will cover the whole video
-INTERVAL = 13 # 13 frames per inverval 
+MAX_FRAMES = 2400  # large numbers will cover the whole video
+INTERVAL = 12 # 13 frames per inverval 
 MAX_MATCH_DISTANCE = 50  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -10,7 +10,7 @@ orb = cv2.ORB_create(nfeatures=1000)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-VIDEO = "demoS.mp4"
+VIDEO = "sidedemo.mp4"
 
 
 def extract_keypoints(video):
