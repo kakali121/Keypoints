@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-08 16:09:16
 LastEditors  : Karen Li
-LastEditTime : 2023-08-09 17:39:08
+LastEditTime : 2023-08-10 20:07:28
 FilePath     : /WallFollowing/util.py
 Description  : 
 '''
@@ -182,7 +182,7 @@ def compute_confidence_ellipse(x, y, n_std=3.0, **kwargs):
     # calculating the standard deviation of y
     scale_y = np.sqrt(cov[1, 1]) * n_std
     mean_y = np.mean(y)
-    return (mean_x, mean_y, ell_radius_x, ell_radius_y)
+    return mean_x, mean_y, ell_radius_x, ell_radius_y
 
 
 def plot_pair_analysis(query, query_name, train, train_name, h, w):
@@ -223,7 +223,7 @@ def plot_pair_analysis(query, query_name, train, train_name, h, w):
     print("x distribution ratio:", (q_rx / t_rx))  # "how close"
 
 
-def pair_analysis(query, query_name, train, train_name, h, w):
+def pair_analysis(query, train):
     '''
     description: 
     param       {*} query: 
@@ -242,5 +242,4 @@ def pair_analysis(query, query_name, train, train_name, h, w):
     tx = np.array([x for (x, y) in train])
     ty = np.array([y for (x, y) in train])
     t_mx, t_my, t_rx, t_ry = compute_confidence_ellipse(tx, ty, edgecolor="red")
-    print("cx deviation:", (q_mx - t_mx) / w)  # "how much away"
-    print("x distribution ratio:", (q_rx / t_rx))  # "how close"
+    return q_mx, q_my, q_rx, q_ry, t_mx, t_my, t_rx, t_ry
