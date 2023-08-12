@@ -1,4 +1,3 @@
-import util
 import cv2
 import numpy as np
 import socket
@@ -24,115 +23,14 @@ bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 CONNECT = True
 
-
-def show_reference_demo(interval, video_file=DEMO_VIDEO, length=INTERVAL_LENGTH):
-    # Create a VideoCapture object to read the video file
-    video_cap = cv2.VideoCapture(video_file)
-    # Set a desiered frame position
-    video_cap.set(cv2.CAP_PROP_POS_FRAMES, interval*length)
-    # Read the frame at the specified position
-    ret, frame = video_cap.read()
-    # Check if the frame was successfully read
-    if not ret:
-        print("No frame at interval ", interval)
-        return None
-    return frame
-
-
-def draw_carrot_frame(k, robot_xy, carrot_xy, robot_frame, interval, skip=SKIP_INTERVAL):
-    # Find the goal image
-    carrot_frame = show_reference_demo((interval+skip))
-    if carrot_frame is None: return None, None
-    # Draw the matching keypoints
-    for i in range(k):
-        carrot_center = (int(carrot_xy[i][0]), int(carrot_xy[i][1]))
-        robot_center = (int(robot_xy[i][0]), int(robot_xy[i][1]))    
-        carrot_frame = cv2.circle(carrot_frame, carrot_center, 3, (255, 0, 0), -1)                             # blue dot
-        carrot_frame = cv2.circle(carrot_frame, robot_center, 3, (0, 0, 255), -1)                              # red dot
-        carrot_frame = cv2.arrowedLine(carrot_frame, carrot_center, robot_center, (0, 255, 255), thickness=1)  # yellow line
-        robot_frame = cv2.circle(robot_frame, robot_center, 3, (0, 0, 255), -1)                                # red dot
-        robot_frame = cv2.circle(robot_frame, carrot_center, 3, (255, 0, 0), -1)                               # blue dot
-        robot_frame = cv2.arrowedLine(robot_frame, robot_center, carrot_center, (0, 255, 255), thickness=1)    # yellow line
-    return robot_frame, carrot_frame
-
-
-def draw_donkey_frame(k, robot_xy, donkey_xy, robot_frame, interval):
-    # Find the best matching reference image
-    donkey_frame = show_reference_demo(interval)
-    if donkey_frame is None: return None, None, None
-    # Draw the matching keypoints
-    for i in range(k):
-        donkey_center = (int(donkey_xy[i][0]), int(donkey_xy[i][1]))
-        robot_center1 = (int(robot_xy[i][0]), int(robot_xy[i][1]))
-        donkey_frame = cv2.circle(donkey_frame, donkey_center, 3, (255, 0, 255), -1)                 # pink dot
-        robot_frame = cv2.circle(robot_frame, robot_center1, 3, (255, 0, 255), -1)   
-    return donkey_frame, robot_frame
-
-
-def find_donkey(robot_descriptors, robot_keypoints, robot_frame, file=DES_FILE):
-    # Find the best matching interval reference
-    possible_intervals = []
-    for i in range(50):
-        possible_interval = util_old.find_best_interval(robot_descriptors, file)
-        if possible_interval is None: break
-        possible_intervals.append(possible_interval)
-    interval = max(set(possible_intervals), key = possible_intervals.count) # Most common interval
-    print("Best matching interval: " + str(interval))
-    # Load reference image keypoints (Donkey)
-    ref_keypoints, ref_descriptors = util_old.load_descriptors(file + "/" + file + str(interval) + ".yml")
-    # Find the best matching keypoints between the robot and reference image
-    rob_ref_matches = bf.match(robot_descriptors, ref_descriptors)
-    print("# Ref kpt matches: " + str(len(rob_ref_matches)))
-    # Find matching keypoints coordinates for retrived and reference keypoints
-    robot_xy, donkey_xy = util_old.keypoint_coordinate(rob_ref_matches, robot_keypoints, ref_keypoints)
-    # Draw the donkey frame
-    donkey_frame, robot_frame = draw_donkey_frame(len(rob_ref_matches), robot_xy, donkey_xy, robot_frame, interval)
-    return donkey_frame, robot_frame, interval
-
-
-def calculate_moving_average_y(new_y_ratio: float) -> float:
-    '''
-    description: Function to calculate the moving average of the y ratio
-    param       {float} new_y_ration: The current y ratio
-    return      {float} The moving average of the y ratio
-    '''
-    global ACCUMULATED_Y_RATIO
-    if ACCUMULATED_Y_RATIO == 0: # If the accumulated y ratio is 0, set it to the current y ratio
-        ACCUMULATED_Y_RATIO = new_y_ratio
-    else: 
-        # Calculate the difference between the current y ratio and the accumulated y ratio
-        y_ratio_diff = abs((new_y_ratio - ACCUMULATED_Y_RATIO) / ACCUMULATED_Y_RATIO) 
-        if y_ratio_diff > 10: # If the difference is too big, discard the current y ratio
-            print("Warning: Broken Match!")
-            print("Discard y ratio: " + str(new_y_ratio))
-            return ACCUMULATED_Y_RATIO
-        # The dynamic gain is the exponential of the difference
-        dynamic_gain = 1/math.exp(y_ratio_diff) 
-        # Calculate the new accumulated y ratio
-        ACCUMULATED_Y_RATIO = ACCUMULATED_Y_RATIO * (1-dynamic_gain) + new_y_ratio * dynamic_gain
-    return ACCUMULATED_Y_RATIO
-
     
 
 if __name__ == "__main__":
 
-    if CONNECT:
-        # Connect to the robot
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((IP_ADDRESS, 5000))
-        print('Connected')
-
-    found_donkey = False
-
     # Create a video capture object to read video stream from camera
     stream_cap = cv2.VideoCapture(STREAM_URL)
-    counter = 0
-    printer = False
 
     while stream_cap.isOpened():
-        counter += 1    
-        if counter % 5 == 0: printer = True
-        else: printer = False
 
     ##### Robot Search #####################################################################################################
 
