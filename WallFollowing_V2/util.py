@@ -1,8 +1,8 @@
 '''
 Author       : Karen Li
 Date         : 2023-08-11 17:54:58
-LastEditors  : Karen Li
-LastEditTime : 2023-08-11 18:02:11
+LastEditors  : Hanqing Qi
+LastEditTime : 2023-08-12 11:11:13
 FilePath     : /WallFollowing_V2/util.py
 Description  : Utility functions
 '''
@@ -30,3 +30,4 @@ def capture_frame_from_demo(interval: int, demo_video: str, interval_length: int
         print("No frame at interval: ", interval)
         return None
     return frame
+
