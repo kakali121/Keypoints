@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-12 12:46:11
 LastEditors  : Karen Li
-LastEditTime : 2023-08-12 18:45:56
+LastEditTime : 2023-08-13 17:42:52
 FilePath     : /WallFollowing_V2/state.py
 Description  : Class to represent a state
 '''
@@ -14,7 +14,7 @@ import cv2
 
 ### Constants ###
 DESCRIPTOR_FILE_PATH = "side_demo_kpt_des"  # Path to the descriptor files
-MAX_MATCH_DISTANCE = 30  # The maximum distance between two matched keypoints
+MAX_MATCH_DISTANCE = 40                     # The maximum distance between two matched keypoints
 
 
 class State:
@@ -22,12 +22,11 @@ class State:
         self, frame: np.array, load: bool = False, interval: int = None
     ) -> None:
         self.frame = frame
+        self.temp_frame = frame.copy() # A copy of the frame to be used for drawing
         self.keypoints = None
         self.descriptors = None
-        if load:
-            self._load_kpt_des(interval)
-        else:
-            self._extract_kpt_des()
+        if load: self._load_kpt_des(interval) # Load the keypoints and descriptors from the descriptor file
+        else: self._extract_kpt_des() # Extract the keypoints and descriptors from the frame
 
     def __str__(self) -> str:
         pass
@@ -99,20 +98,19 @@ class State:
         param       {*} self: -
         param       {State} state: The state to be compared with 
         param       {bool} filter: Whether to filter the matches by distance
-        return      {Tuple[List[np.array], List[np.array]]}: The coordinates of the matched keypoints
+        return      {Tuple[List[np.array], List[np.array], int]}: The coordinates and number of the matched keypoints
         '''
         if not isinstance(state, State):
             raise TypeError("The input must be a State object")
         matches = self._get_matches(state)
-        if matches is None:
-            return None, None
+        if matches is None: return None, None, 0
         if filter:
             matches = [match for match in matches if match.distance < MAX_MATCH_DISTANCE]
         query_coordinte, train_coordinate = self._find_match_pair(matches, state)
         if draw_keypoints:
             self._draw_keypoints_pair(query_coordinte, train_coordinate)
             state._draw_keypoints_pair(train_coordinate, query_coordinte)
-        return query_coordinte, train_coordinate
+        return query_coordinte, train_coordinate, len(matches)
 
     def get_match_distance(self, state: 'State') -> float:
         '''
@@ -124,8 +122,7 @@ class State:
         if not isinstance(state, State):
             raise TypeError("The input must be a State object")
         matches = self._get_matches(state)
-        if not matches:
-            return float('inf')  # or some other value indicating no matches
+        if not matches: return float('inf')  # or some other value indicating no matches
         return sum(match.distance for match in matches) / len(matches)
 
     def _draw_keypoints_pair(self, query_coordinate: np.array, train_coordinate: np.array) -> None:
@@ -146,11 +143,11 @@ class State:
             t_point = (int(t_point[0]), int(t_point[1]))
 
             # Draw query and train keypoints
-            cv2.circle(self.frame, q_point, 4, (0, 255, 0), -1)  # Green for query
-            cv2.circle(self.frame, t_point, 4, (0, 0, 255), -1)  # Red for train
+            self.temp_frame = cv2.circle(self.temp_frame, q_point, 4, (0, 255, 0), -1)  # Green for query
+            self.temp_frame = cv2.circle(self.temp_frame, t_point, 4, (0, 0, 255), -1)  # Red for train
 
             # Draw arrow between matched keypoints
-            cv2.arrowedLine(self.frame, q_point, t_point, (255, 0, 0), 2, tipLength=0.2)  # Blue for arrows
+            self.temp_frame = cv2.arrowedLine(self.temp_frame, q_point, t_point, (255, 0, 0), 2, tipLength=0.2)  # Blue for arrows
 
     def compute_confidence_ellipse(self, query_coordinate: np.array, n_std=2.5, draw: bool = True) -> Tuple[int, int, int, int]:
         '''
@@ -173,10 +170,18 @@ class State:
 
         if draw:
             # Draw the ellipse on the frame
-            cv2.ellipse(self.frame, (mean_x, mean_y), (int(std_x), int(std_y)), 0, 0, 360, (255, 0, 255), 2)
+            self.temp_frame = cv2.ellipse(self.temp_frame, (mean_x, mean_y), (int(std_x), int(std_y)), 0, 0, 360, (255, 0, 255), 2)
             # Draw the center of the ellipse
-            cv2.circle(self.frame, (mean_x, mean_y), 5, (255, 0, 255), -1)
+            self.temp_frame = cv2.circle(self.temp_frame, (mean_x, mean_y), 5, (255, 0, 255), -1)
             
         # Return the computed parameters (Optional, based on your needs)
         return mean_x, mean_y, std_x*2, std_y*2
 
+    def show_frame(self, title: str) -> None:
+        '''
+        description: Show the frame after drawing
+        param       {*} self: -
+        return      {*}: None
+        '''
+        cv2.imshow(title, self.temp_frame)
+        self.temp_frame = self.frame.copy() # Reset the temp frame
