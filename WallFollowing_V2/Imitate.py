@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Karen Li
-LastEditTime : 2023-08-13 18:25:47
+LastEditTime : 2023-08-14 13:16:19
 FilePath     : /WallFollowing_V2/imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''

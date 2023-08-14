@@ -10,7 +10,7 @@ orb = cv2.ORB_create(nfeatures=1000)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-VIDEO = "sidedemo2.mp4"
+VIDEO = "../sidedemo2.mp4"
 
 
 def extract_keypoints(video):
@@ -35,8 +35,6 @@ def extract_keypoints(video):
         frame_kpt.append(kpt)
         frame_des.append(des)
         video_frames.append(frame)
-        # frame = cv2.drawKeypoints(frame, kpt, None, color=(0, 255, 0), flags=0)
-        # cv2.imshow("frame", frame)
         k += 1
         # Wait for Esc key to stop
         if cv2.waitKey(1) == 27:
@@ -122,17 +120,6 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
             pt1s.append(pt1)
             pt2s.append(pt2)
             frame[k] = cv2.line(frame[k], pt1, pt2, (0, 0, 255), thickness=2)
-
-        # if len(pt1s) > 2 and len(pt2s) > 2:
-        #     # Compute the convex hulls
-        #     hull1 = ConvexHull(np.array(pt1s))
-        #     hull2 = ConvexHull(np.array(pt2s))
-        #     # Convert hull points to the correct format for cv2.drawContours()
-        #     hull1_points = np.array(pt1s)[hull1.vertices]
-        #     hull2_points = np.array(pt2s)[hull2.vertices]
-        #     # Draw the contours on the frame
-        #     cv2.drawContours(frame[k], [hull1_points], -1, (255, 255, 0), 3) # color blue
-        #     cv2.drawContours(frame[k], [hull2_points], -1, (255, 0, 255), 3) # color pink
 
         cv2.imshow("frame", frame[k])
         out.write(frame[k])

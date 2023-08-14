@@ -22,9 +22,7 @@ class WallTraker:
         self.total_interval = total_interval      # Total number of intervals in the demo video
         self.interval_length = interval_length    # Number of frames in a timeline interval
         self.skip_interval = skip_interval        # Interval between donkey and carrot
-        
         self.accumulated_y_ratio = 0.0            # Accumulated y ratio
-
         self.total_states: List[State] = []       # A list of all states in the demo video
         self._load_all_states()                   # Load all frames from the demo video into a list of states
         self.robot_state = State(initial_frame)   # Create a state object for the robot

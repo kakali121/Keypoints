@@ -2,8 +2,8 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Karen Li
-LastEditTime : 2023-08-13 15:45:50
-FilePath     : /WallFollowing_V2/robot.py
+LastEditTime : 2023-08-14 13:43:12
+FilePath     : /WallFollowing_V2/Robot.py
 Description  : This is the class for the robot
 '''
 
@@ -14,6 +14,8 @@ import socket
 ### Constants ###
 MIN_V = 700 # Minimum velocity of the robot to overcome friction
 MAX_V = 900 # Maximum velocity of the robot 
+BANGBANG_V = [700, 700, 800]
+ZERO_COMMAND = 'CMD_MOTOR#0#0#0#0\n' # Command to stop the robot
 
 class Robot:
     def __init__(self, IP_adress: str, connect: bool) -> None:
@@ -36,7 +38,7 @@ class Robot:
         self.socket.connect((self.IP_adress, 5000))
         print('### The robot is connected ###')
 
-    def move(self, v: float, ω: float) -> None:
+    def move_legacy(self, v: float, ω: float) -> None:
         '''
         description: Move the robot based on the linear and angular velocity
         param       {*} self: -
@@ -59,6 +61,32 @@ class Robot:
         else:
             print('@debug: ', command) # Print the command if the robot is not connected
 
+    def move(self, v: float, ω: float) -> None:
+        if v == 0:
+            command = ZERO_COMMAND
+        else:
+            # Implement bang-bang control
+            if v > 0:
+                if ω > 50:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[1], BANGBANG_V[1])
+                elif ω < -50:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[1], BANGBANG_V[1], -BANGBANG_V[0], -BANGBANG_V[0])
+                else:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
+            elif v < 0:
+                if ω > 50:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[1], BANGBANG_V[1], -BANGBANG_V[0], -BANGBANG_V[0])
+                elif ω < -50:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[1], BANGBANG_V[1])
+                else:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
+        if self.connected:
+            self.socket.send(command.encode())
+            print('@sending: ', command)
+        else:
+            print('@debug: ', command)
+                    
+
     def disconnect(self) -> None:
         '''
         description: Disconnect the robot
@@ -66,8 +94,7 @@ class Robot:
         return      {*}: None
         '''
         if self.connected:
-            command = 'CMD_MOTOR#0#0#0#0\n'
-            self.socket.send(command.encode())
+            self.socket.send(ZERO_COMMAND.encode())
             self.socket.close()
             self.connected = False
         print('### The robot is disconnected ###')
