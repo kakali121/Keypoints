@@ -1,105 +1,108 @@
-'''
+"""
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
-LastEditors  : Karen Li
-LastEditTime : 2023-08-14 16:42:50
-FilePath     : /WallFollowing_V3/Robot.py
+LastEditors  : Hanqing Qi
+LastEditTime : 2023-08-15 14:28:24
+FilePath     : /WallFollowing_Front/Robot.py
 Description  : This is the class for the robot
-'''
+"""
 
 ### Import Packages ###
 import numpy as np
 import socket
 
 ### Constants ###
-MIN_V = 700 # Minimum velocity of the robot to overcome friction
-MAX_V = 900 # Maximum velocity of the robot 
-BANGBANG_V = [650, 650, 800]
-ZERO_COMMAND = 'CMD_MOTOR#0#0#0#0\n' # Command to stop the robot
+# Robot Velocity Limits
+MIN_V = 700  
+MAX_V = 900  
+
+# Bang-bang control values
+BANGBANG_V = [700, 650, 800]
+
+# Robot Commands
+ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"
+
 
 class Robot:
-    def __init__(self, IP_adress: str, connect: bool) -> None:
-        self.IP_adress = IP_adress
+    def __init__(self, IP_address: str, connect: bool) -> None:
+        """
+        description: The constructor of the robot class
+        param       {*} self: -
+        param       {str} IP_address: IP address of the robot
+        param       {bool} connect: Whether to connect to the robot
+        return      {*}: None
+        """
+        self.IP_address = IP_address
         self.connected = False
         if connect:
             self.connect()
-        
+
     def __str__(self) -> str:
-        pass
+        """
+        description: The string representation of the robot
+        param       {*} self: -
+        return      {str}: The string representation of the robot
+        """
+        return f"Robot IP: {self.IP_address}, Connected: {self.connected}"
 
     def connect(self) -> None:
-        '''
+        """
         description: Connect to the robot
         param       {*} self: -
         return      {*}: None
-        '''
-        self.connected = True
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.IP_adress, 5000))
-        print('### The robot is connected ###')
+        """
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.IP_address, 5000))
+            self.connected = True
+            print("#-------- The robot is connected --------#")
+        except Exception as e:
+            print(f"Error connecting to robot: {e}")
 
-    def move_legacy(self, v: float, ω: float) -> None:
-        '''
-        description: Move the robot based on the linear and angular velocity
+    def construct_command(self, velocities: list) -> str:
+        """
+        description: Construct the command to send to the robot
         param       {*} self: -
-        param       {float} v: linear velocity
-        param       {float} ω: angular velocity
-        return      {*}: None
-        '''
-        if v == 0 and ω == 0:
-            command = 'CMD_MOTOR#0#0#0#0\n'
-        else:
-            # Calculate the left and right wheel velocity
-            control_param = np.array([v - ω, v + ω])
-            # Limit the velocity to the range of [MIN_V, MAX_V]
-            control_param = [min(MAX_V, max(MIN_V, p)) if p >= 0 else max(-MAX_V, min(-MIN_V, p)) for p in control_param]
-            # Construct the command
-            command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(control_param[0], control_param[0], control_param[1], control_param[1])
-        if self.connected:
-            self.socket.send(command.encode()) # Send the command to the robot
-            print('@sending: ', command) # Print the command if the robot is connected
-        else:
-            print('@debug: ', command) # Print the command if the robot is not connected
+        param       {list} velocities: The velocities of the four wheels
+        return      {str}: The command to send to the robot
+        """
+        return f"CMD_MOTOR#{velocities[0]}#{velocities[1]}#{velocities[2]}#{velocities[3]}\n"
 
     def move(self, v: float, ω: float) -> None:
-        if v == 0:
+        """
+        description: Move the robot with the given linear and angular velocity
+        param       {*} self: -
+        param       {float} v: Linear velocity
+        param       {float} ω: Angular velocity
+        return      {*}: None
+        """
+        if abs(v) < 20:
             command = ZERO_COMMAND
         else:
-            # Implement bang-bang control
-            if v > 30:
-                if ω > 60:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
-                elif ω < -60:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0])
-                else:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
-            elif v < -30:
-                if ω > 60:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0])
-                elif ω < -60:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
-                else:
-                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0])
-            else:
-                command = ZERO_COMMAND
+            idx = 0 if abs(ω) > 60 else 1
+            base = -1 if v < 0 else 1
+            rotation = 1 if ω > 0 else -1
+            command_values = [BANGBANG_V[idx] * base * (1 - rotation), 
+                              BANGBANG_V[idx] * base * (1 + rotation)] * 2
+            command = self.construct_command(command_values)
+
         if self.connected:
             self.socket.send(command.encode())
-            print('@sending: ', command)
+            print("@sending: ", command)
         else:
-            print('@debug: ', command)
-                    
+            print("@debug: ", command)
 
     def disconnect(self) -> None:
-        '''
+        """
         description: Disconnect the robot
         param       {*} self: -
         return      {*}: None
-        '''
+        """
         if self.connected:
             self.socket.send(ZERO_COMMAND.encode())
+            self.socket.shutdown(socket.SHUT_RDWR)
             self.socket.close()
             self.connected = False
-        print('### The robot is disconnected ###')
-
-    
-    
+            print("#-------- The robot is disconnected --------#")
+        else:
+            print("Robot is already disconnected")

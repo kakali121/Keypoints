@@ -105,7 +105,7 @@ class WallTraker:
             if num_matches > 3:
                 robot_center_x, robot_center_y, robot_x_radius, robot_y_radius = self.robot_state.compute_confidence_ellipse(query_coordinate)
                 carrot_center_x, carrot_center_y, carrot_x_radius, carrot_y_radius = state.compute_confidence_ellipse(train_coordinate)
-                y_ratio = robot_y_radius / carrot_y_radius
+                y_ratio = carrot_y_radius / robot_y_radius # For going front, this needs to be reversed to c/r
                 if y_ratio < min_y_ratio:
                     min_y_ratio = y_ratio
                     self.donkey_index = index
@@ -133,7 +133,7 @@ class WallTraker:
                 (new_y_ratio - self.accumulated_y_ratio) / self.accumulated_y_ratio
             )
             if (
-                y_ratio_diff > 10
+                y_ratio_diff > 5
             ):  # If the difference is too big, discard the current y ratio
                 print("Warning: Broken Match!")
                 print("Discard y ratio: " + str(new_y_ratio))

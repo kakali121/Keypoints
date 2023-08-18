@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-08-15 13:20:09
+LastEditTime : 2023-08-15 16:08:26
 FilePath     : /WallFollowing_Front/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''
@@ -21,8 +21,8 @@ TOTAL_INTERVALS = 240            # Total number of intervals in the demo video
 INTERVAL_LENGTH = 10             # Number of frames in a timeline interval
 SKIP_INTERVAL = 6                # Interval between donkey and carrot
 
-V_GAIN = 3                      # Gain of velocity
-W_GAIN = 400                     # Gain of angular velocity
+V_GAIN = 1500                    # Gain of velocity
+# W_GAIN = 400                     # Gain of angular velocity
 
 CONNECT_TO_ROBOT = True          # Whether to connect to the robot
 
@@ -33,7 +33,7 @@ myrobot = Robot.Robot(IP_ADDRESS, CONNECT_TO_ROBOT)
 streaming_video = cv2.VideoCapture(STREAMING_URL)
 # Create a wall tracker object
 ret, robot_frame = streaming_video.read()  # Take a frame from the video stream
-wall_tracker = WallTraker(robot_frame, TOTAL_INTERVALS, INTERVAL_LENGTH, SKIP_INTERVAL)
+wall_tracker = WallTraker(robot_frame, TOTAL_INTERVALS, INTERVAL_LENGTH, SKIP_INTERVAL, True)
 # Initialize the counter
 lost_count = 0     # The number of times the robot lost the wall
 # Create a video writer object
@@ -49,8 +49,8 @@ try:
         robot_frame, carrot_frame = wall_tracker.show_all_frames()
         out1.write(robot_frame)
         out2.write(carrot_frame)
-        v = V_GAIN * x_diff  # Compute the linear velocity
-        ω = W_GAIN * (1 - processed_y_ratio)  # Compute the angular velocity
+        ω = -x_diff  # Compute the linear velocity
+        v = V_GAIN * (1 - processed_y_ratio)  # Compute the angular velocity
         print("x_diff: ", x_diff)
         print("processed_y_ratio: ", processed_y_ratio)
         print("v: ", v, "\nω: ", ω)

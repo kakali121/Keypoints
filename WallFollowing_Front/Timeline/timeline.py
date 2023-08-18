@@ -7,11 +7,11 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 WINDOW_T = 20
-VIDEO_FILE = '../backforth.mp4'
+VIDEO_FILE = 'frontdemo.mp4'
 # IMAGE_FILE = '1.jpg'
 MAX_FRAMES = 2400                       # large numbers will cover the whole video
 SHORTEST_LENGTH = 5                     # min 5
-MAX_MATCH_DISTANCE = 30                 # match threshold
+MAX_MATCH_DISTANCE = 40                 # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
 orb = cv2.ORB_create()
@@ -65,6 +65,7 @@ def find_long_paths_T(G):
     sorted_vertices = list(nx.topological_sort(G_inv))
     # for each subtree
     for v in sorted_vertices:
+        print("v:", v)
         # v was already visited?
         if visited_flag[v]:
             continue
@@ -113,6 +114,8 @@ def sequential_matches_graph(frame_des, T=1):
             best_edges = [(m.queryIdx, m.trainIdx) for m in matches]
             for e in best_edges:
                 edges.append(((i, e[0]), (i + t, e[1])))
+        if i%10 == 0:
+            print("progress:", i, "of", len(frame_des) - T)
     # Create an empty graph
     G = nx.DiGraph()
     # Add the edges to the graph
@@ -253,12 +256,15 @@ if __name__ == "__main__":
     print("Number of edges:", G.number_of_edges())
 
     # ## Find the long paths
+    print("Finding long paths...")
     long_paths = find_long_paths_T(G)
 
     # ## Plot keypoint timeline
+    print("Plotting keypoint timeline...")
     plot_kp_timeline(long_paths)
 
     # ## Save video with keypoints
+    print("Saving video with keypoints...")
     save_kp_video(frames, frame_kps, long_paths)
 
     # ## Find descriptor - first frame
