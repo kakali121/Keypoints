@@ -1,6 +1,6 @@
 import cv2 
 
-NAME = 'sidedemo3.mp4'
+NAME = 'cornerdemo.mp4'
 
 if __name__ == "__main__":
     # Create a VideoCapture object to read the video file
