@@ -2,7 +2,7 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Karen Li
-LastEditTime : 2023-08-25 17:07:53
+LastEditTime : 2023-08-26 15:38:15
 FilePath     : /WallFollowing_Corner/Robot.py
 Description  : This is the class for the robot
 '''
@@ -38,7 +38,7 @@ class Robot:
         self.socket.connect((self.IP_adress, 5000))
         print('### The robot is connected ###')
 
-    def move_legacy(self, v: float, ω: float) -> None:
+    def move(self, v: float, ω: float) -> None:
         '''
         description: Move the robot based on the linear and angular velocity
         param       {*} self: -
@@ -47,21 +47,33 @@ class Robot:
         return      {*}: None
         '''
         if v == 0 and ω == 0:
-            command = 'CMD_MOTOR#0#0#0#0\n'
+            command = ZERO_COMMAND
         else:
-            # Calculate the left and right wheel velocity
-            control_param = np.array([v - ω, v + ω])
-            # Limit the velocity to the range of [MIN_V, MAX_V]
-            control_param = [min(MAX_V, max(MIN_V, p)) if p >= 0 else max(-MAX_V, min(-MIN_V, p)) for p in control_param]
-            # Construct the command
-            command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(control_param[0], control_param[0], control_param[1], control_param[1])
+            if v > 30:
+                Base = 600 + int(v) + abs(int(ω))
+                if ω > 20:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-Base, -Base, Base, Base)
+                elif ω < -20:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(Base, Base, -Base, -Base)
+                else:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(Base, Base, Base, Base)
+            elif v < -30:
+                Base = -600 + int(v) - abs(int(ω))
+                if ω > 20:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(Base, Base, -Base, -Base)
+                elif ω < -20:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-Base, -Base, Base, Base)
+                else:
+                    command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-Base, -Base, -Base, -Base)
+            else:
+                command = ZERO_COMMAND
         if self.connected:
             self.socket.send(command.encode()) # Send the command to the robot
             print('@sending: ', command) # Print the command if the robot is connected
         else:
             print('@debug: ', command) # Print the command if the robot is not connected
 
-    def move(self, v: float, ω: float) -> None:
+    def move_legacy(self, v: float, ω: float) -> None:
         if v == 0:
             command = ZERO_COMMAND
         else:
@@ -87,7 +99,6 @@ class Robot:
             print('@sending: ', command)
         else:
             print('@debug: ', command)
-                    
 
     def disconnect(self) -> None:
         '''

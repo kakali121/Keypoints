@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-MAX_FRAMES = 1800  # large numbers will cover the whole video
+MAX_FRAMES = 2000  # large numbers will cover the whole video
 INTERVAL = 10 # 13 frames per inverval 
 MAX_MATCH_DISTANCE = 40  # match threshold
 
