@@ -6,12 +6,12 @@ from cv2 import norm
 import networkx as nx
 import matplotlib.pyplot as plt
 
-WINDOW_T = 20
 VIDEO_FILE = 'corner.mp4'
 # IMAGE_FILE = '1.jpg'
-MAX_FRAMES = 2500                       # large numbers will cover the whole video
-SHORTEST_LENGTH = 5                     # min 5
-MAX_MATCH_DISTANCE = 30                 # match threshold
+MAX_FRAMES = 300                        # large numbers will cover the whole video
+WINDOW_T = 20                           # maximum time interval between frames 
+SHORTEST_LENGTH = 10                    # min 10 frames in a path
+MAX_MATCH_DISTANCE = 15                 # match threshold hamming distance  
 
 # Create an ORB object and detect keypoints and descriptors in the template
 orb = cv2.ORB_create()
@@ -22,13 +22,7 @@ bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 def keypoints_from_image_file(image_file):
     img = cv2.imread(image_file)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect keypoints and compute descriptors in the frame
     keypoints, des = orb.detectAndCompute(gray, None)
-    # print(keypoints)
-    # img_with_keypoints = cv2.drawKeypoints(img, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    # Display the image with keypoints
-    # plt.imshow(img_with_keypoints)
-    # plt.show()
     return keypoints, des, img
 
 
@@ -56,40 +50,34 @@ def descriptors_per_interval(times, time_kps, frame_kps, frame_des, plot=False):
 
 
 def find_long_paths_T(G):
-    # Invert the graph
-    G_inv = nx.DiGraph()
-    G_inv.add_edges_from([(v, u) for u, v in G.edges])
-    visited_flag = {v: 0 for v in G.nodes}
+    G_inv = nx.DiGraph()                                # Create an empty graph
+    G_inv.add_edges_from([(v, u) for u, v in G.edges])  # Add the edges to the graph```
+    visited_flag = {v: 0 for v in G.nodes} 
     paths = []
-    # Run topological sort
-    sorted_vertices = list(nx.topological_sort(G_inv))
-    # for each subtree
-    for v in sorted_vertices:
-        # v was already visited?
-        if visited_flag[v]:
-            continue
+    sorted_vertices = list(nx.topological_sort(G_inv))  # Run topological sort
+    for v in sorted_vertices:                           # for each subtree
+        if visited_flag[v]: continue
         v_decendents = nx.descendants(G_inv, v)
         oldest_t = math.inf
         oldest_v = None
         for u in v_decendents:
-            # mark as visited
-            visited_flag[u] = 1
-            # find the oldest
-            t, _ = u
-            if t < oldest_t:
-                oldest_t = t
-                oldest_v = u
-        if oldest_v is None:
-            continue
+            visited_flag[u] = 1                         # mark as visited
+            t, _ = u                                    # get the time
+            if t < oldest_t:                            # find the oldest time
+                oldest_t = t                            # update oldest time
+                oldest_v = u                            # update oldest vertex
+        if oldest_v is None: continue
         path = nx.shortest_path(
             G, source=oldest_v, target=v
         )  # FIXME Switch to longest path
         paths.append(path)
     # Find the paths with length greater than a threshhold. remove the source and sink nodes.
+    for i, path in enumerate(paths):
+        if len(path) < SHORTEST_LENGTH: continue
+        print("Path", i, "length:", len(path))
     long_paths = [p for p in paths if len(p) >= SHORTEST_LENGTH]
     print("Long paths:", len(long_paths))
-    # sort by frame time
-    long_paths = sorted(long_paths, key=lambda x: x[0])
+    long_paths = sorted(long_paths, key=lambda x: x[0]) # sort by frame time
     return long_paths
 
 
@@ -104,15 +92,13 @@ def find_best_matches(frame_des1, frame_des2):
 
 def sequential_matches_graph(frame_des, T=1):
     edges = []  # ((time, kp_id), (time, kp_id))
+    # For each frame, find the best matches with the next T frames
     for i in range(len(frame_des) - T):
         for t in range(1, T + 1):
-            # matches(query_this_image, train)
             matches = bf.match(frame_des[i], frame_des[i + t])
-            # Best matches: Filter by max distance
             matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
             best_edges = [(m.queryIdx, m.trainIdx) for m in matches]
-            for e in best_edges:
-                edges.append(((i, e[0]), (i + t, e[1])))
+            for e in best_edges: edges.append(((i, e[0]), (i + t, e[1])))
     # Create an empty graph
     G = nx.DiGraph()
     # Add the edges to the graph
@@ -133,15 +119,11 @@ def find_timelines_from_video(frame_des, T=WINDOW_T):
 
 
 def extract_keypoints(video, max_frames):
-    # Create a VideoCapture object to read the video file
     cap = cv2.VideoCapture(video)
-    # Extract all keypoints and descriptors by frame
     frame_kps, frame_des = [], []
     video_frames = []
     k = 0
-    # Loop through the video frames
     while cap.isOpened() and k < max_frames:
-        # Read a frame from the video
         ret, frame = cap.read()
         # Check if the frame was successfully read
         if ret:
@@ -154,9 +136,8 @@ def extract_keypoints(video, max_frames):
             frame_des.append(des2)
             video_frames.append(frame)
             k += 1
-        else:
-            break
-    print("k =", k)
+        else: break
+    print("Total frams:", k)
     cap.release()
     return frame_kps, frame_des, video_frames
 
