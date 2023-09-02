@@ -2,8 +2,8 @@
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
 LastEditors  : Karen Li
-LastEditTime : 2023-09-01 16:07:59
-FilePath     : /WallFollowing_Corner/WallTraker.py
+LastEditTime : 2023-09-02 16:17:24
+FilePath     : /WallFollowing_Lab_Corner/WallTraker.py
 Description  : Wall traker of the robot
 '''
 
@@ -95,6 +95,7 @@ class WallTraker:
                 print("Discard y ratio: " + str(new_y_ratio))
                 return self.accumulated_y_ratio
             # The dynamic gain is the exponential of the difference
+            # dynamic_gain = 1/(y_ratio_diff ** 1.7)
             dynamic_gain = 1/math.exp(y_ratio_diff) 
             # Calculate the new accumulated y ratio
             self.accumulated_y_ratio = self.accumulated_y_ratio * (1-dynamic_gain) + new_y_ratio * dynamic_gain

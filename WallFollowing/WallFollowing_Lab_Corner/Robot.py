@@ -2,12 +2,14 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Karen Li
-LastEditTime : 2023-08-26 15:38:15
-FilePath     : /WallFollowing_Corner/Robot.py
+LastEditTime : 2023-09-02 16:36:00
+FilePath     : /WallFollowing_Lab_Corner/Robot.py
 Description  : This is the class for the robot
 '''
 
 ### Import Packages ###
+from Optitrack_dependency.NatNetClient import NatNetClient
+from Optitrack_dependency.util import quaternion_to_euler_angle_vectorized1
 import numpy as np
 import socket
 
@@ -21,11 +23,37 @@ class Robot:
     def __init__(self, IP_adress: str, connect: bool) -> None:
         self.IP_adress = IP_adress
         self.connected = False
+        self.clientAddress = "192.168.0.52"
+        self.optitrackServerAddress = "192.168.0.4"
+        self.robot_id = 121
+        if not self.optitrack_init():
+            print('### Optitrack is cannot be initialized ###')
+        self.file = open('test_data.txt', 'w')  # Open the file in write mode
+        self.positions = {}
+        self.rotations = {}
         if connect:
             self.connect()
         
+        
     def __str__(self) -> str:
         pass
+
+    def optitrack_init(self) -> None:
+        streaming_client = NatNetClient()
+        streaming_client.set_client_address(self.clientAddress)
+        streaming_client.set_server_address(self.optitrackServerAddress)
+        streaming_client.set_use_multicast(True)
+        streaming_client.rigid_body_listener = self._receive_rigid_body_frame
+        is_running = streaming_client.run()
+        return is_running
+        
+            
+    def _receive_rigid_body_frame(self, robot_id, position, rotation_quaternion):
+        # Position and rotation received
+        self.positions[robot_id] = position
+        # The rotation is in quaternion. We need to convert it to euler angles
+        rotx, roty, rotz = quaternion_to_euler_angle_vectorized1(rotation_quaternion)
+        self.rotations[robot_id] = rotz
 
     def connect(self) -> None:
         '''
@@ -38,6 +66,14 @@ class Robot:
         self.socket.connect((self.IP_adress, 5000))
         print('### The robot is connected ###')
 
+    def _record_location(self) -> None:
+        if self.robot_id in self.positions:
+            x = self.positions[self.robot_id][0]
+            y = self.positions[self.robot_id][1]
+            rotation = self.rotations[self.robot_id]
+            self.file.write(f"{0:.2f}, {x}, {y}, {rotation}\n")
+            print('x:',x, 'y:',y, ' rotation:', rotation)
+
     def move(self, v: float, ω: float) -> None:
         '''
         description: Move the robot based on the linear and angular velocity
@@ -46,6 +82,7 @@ class Robot:
         param       {float} ω: angular velocity
         return      {*}: None
         '''
+        self._record_location()
         if v == 0 and ω == 0:
             command = ZERO_COMMAND
         else:
@@ -74,6 +111,7 @@ class Robot:
             print('@debug: ', command) # Print the command if the robot is not connected
 
     def move_legacy(self, v: float, ω: float) -> None:
+        self._record_location()
         if v == 0:
             command = ZERO_COMMAND
         else:

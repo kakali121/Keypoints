@@ -2,8 +2,8 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Karen Li
-LastEditTime : 2023-09-01 16:00:28
-FilePath     : /WallFollowing_Corner/Imitate.py
+LastEditTime : 2023-09-02 16:25:19
+FilePath     : /WallFollowing_Lab_Corner/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''
 
@@ -65,7 +65,7 @@ def plot_speeds():
     plt.xlabel('Time')
     plt.ylabel('Angular Velocity (ω)')
     plt.grid(True)
-    plt.savefig("omega_plot.png")
+    plt.savefig("omega_plot.pdf")
 
     # Plot number of matches
     plt.figure(2)  # Create another new figure window
@@ -74,7 +74,7 @@ def plot_speeds():
     plt.xlabel('Time')
     plt.ylabel('Number of Matches')
     plt.grid(True)
-    plt.savefig("match_plot.png")
+    plt.savefig("match_plot.pdf")
 
     # Now show both figures
     plt.show()
@@ -122,6 +122,9 @@ try:
             myrobot.disconnect()
             break
     plot_speeds()
+    # Close the video writer
+    out1.release()
+    out2.release()
 
 
 except (Exception, KeyboardInterrupt) as e:
@@ -131,3 +134,6 @@ except (Exception, KeyboardInterrupt) as e:
     streaming_video.release()
     myrobot.disconnect()
     plot_speeds()
+    # Close the video writer
+    out1.release()
+    out2.release()

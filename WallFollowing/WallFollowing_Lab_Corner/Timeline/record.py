@@ -1,8 +1,8 @@
 import cv2 
 import sys
 import time
-from NatNetClient import NatNetClient
-from util import quaternion_to_euler_angle_vectorized1
+from Optitrack_dependency.NatNetClient import NatNetClient
+from Optitrack_dependency.util import quaternion_to_euler_angle_vectorized1
 
 positions = {}
 rotations = {}
@@ -34,7 +34,8 @@ if __name__ == "__main__":
 
     # Start up the streaming client now that the callbacks are set up.
     # This will run perpetually, and operate on a separate thread.
-    is_running = streaming_client.run()    # Create a VideoCapture object to read the video file
+    is_running = streaming_client.run()    
+    # Create a VideoCapture object to read the video file
     cap = cv2.VideoCapture("http://192.168.0.204:1234/stream.mjpg")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 20
