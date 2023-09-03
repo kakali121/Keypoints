@@ -2,8 +2,8 @@
 Author       : Karen Li
 Date         : 2023-08-12 12:46:11
 LastEditors  : Karen Li
-LastEditTime : 2023-09-01 16:06:32
-FilePath     : /WallFollowing_Corner/State.py
+LastEditTime : 2023-09-03 17:10:31
+FilePath     : /WallFollowing_Lab_Corner/State.py
 Description  : Class to represent a state
 '''
 
@@ -14,7 +14,7 @@ import cv2
 
 ### Constants ###
 DESCRIPTOR_FILE_PATH = "side_demo_kpt_des"      # Path to the descriptor files
-MAX_MATCH_DISTANCE = 50                         # The maximum distance between two matched keypoints
+MAX_MATCH_DISTANCE = 40                         # The maximum distance between two matched keypoints
 
 
 class State:

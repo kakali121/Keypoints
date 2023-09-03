@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Karen Li
-LastEditTime : 2023-09-02 16:25:19
+LastEditTime : 2023-09-03 17:14:21
 FilePath     : /WallFollowing_Lab_Corner/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''
@@ -18,7 +18,7 @@ import cv2
 IP_ADDRESS = '192.168.0.204'     # IP address of the robot
 STREAMING_URL = "http://192.168.0.204:1234/stream.mjpg"  # Video streaming url
 
-TOTAL_INTERVALS = 200            # Total number of intervals in the demo video
+TOTAL_INTERVALS = 300            # Total number of intervals in the demo video
 INTERVAL_LENGTH = 12             # Number of frames in a timeline interval
 SKIP_INTERVAL = 3                # Interval between donkey and carrot
 
@@ -29,6 +29,7 @@ CONNECT_TO_ROBOT = True          # Whether to connect to the robot
 V_VALUES = []                    # A list of linear velocities
 ω_VALUES = []                    # A list of angular velocities
 NUM_MATCH = []                   # A list of number of matches
+RAW_ω = []           # A list of raw ellipse ratios
 
 ### Initialization ###
 # Create a robot object
@@ -49,21 +50,21 @@ out2 = cv2.VideoWriter("carrot.mp4", fourcc, fps, (400, 300))
 
 def plot_speeds():
     # # Plot v values
-    # plt.figure()
+    # plt.figure(0)
     # plt.plot(V_VALUES)
     # plt.title('Velocity (v) over Time')
     # plt.xlabel('Time')
     # plt.ylabel('Velocity (v)')
     # plt.grid(True)
-    # plt.savefig("v_plot.png")
-    # plt.show()
+    # plt.savefig("v_plot.pdf")
 
-    # Plot ω values
+    # Plot ω values with raw ellipse ratio on the same plot
     plt.figure(1)  # Create a new figure window
     plt.plot(ω_VALUES)
     plt.title('Angular Velocity (ω) over Time')
     plt.xlabel('Time')
-    plt.ylabel('Angular Velocity (ω)')
+    plt.ylabel('Values')
+    plt.legend()
     plt.grid(True)
     plt.savefig("omega_plot.pdf")
 
@@ -76,14 +77,25 @@ def plot_speeds():
     plt.grid(True)
     plt.savefig("match_plot.pdf")
 
-    # Now show both figures
+    # Plot raw ellipse ratio
+    plt.figure(3)  # Create another new figure window
+    plt.plot(RAW_ω)
+    # Plot the line y=1
+    plt.plot([0, TOTAL_INTERVALS], [1, 1], color='red', linestyle='dashed', linewidth=1)
+    plt.title('Raw Ellipse Ratio over Time')
+    plt.xlabel('Time')
+    plt.ylabel('Raw Ellipse Ratio')
+    plt.grid(True)
+    plt.savefig("raw_ellipse_plot.pdf")
+
+    # Now show all figures
     plt.show()
 
 ### Main Loop ###
 try:
     while streaming_video.isOpened():
         if not position == -1: print("Going to interval: ", position)
-        x_diff, processed_y_ratio, num_match, lost = wall_tracker.chase_carrot()
+        x_diff, processed_y_ratio, num_match, lost, raw_ellipse_ratio = wall_tracker.chase_carrot()
         robot_frame, carrot_frame = wall_tracker.show_all_frames()
         out1.write(robot_frame)
         out2.write(carrot_frame)
@@ -95,6 +107,7 @@ try:
         V_VALUES.append(v)
         ω_VALUES.append(ω)
         NUM_MATCH.append(num_match)
+        RAW_ω.append(raw_ellipse_ratio)
 
 
         if abs(x_diff) < 10 and not lost: # If the robot is close enough to the carrot

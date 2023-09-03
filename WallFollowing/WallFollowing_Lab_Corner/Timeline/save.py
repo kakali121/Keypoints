@@ -10,7 +10,8 @@ orb = cv2.ORB_create(nfeatures=1000)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-VIDEO = "lab_corners.mp4"
+VIDEO = "../lab_corners.mp4"
+# VIDEO = "./Videos/lab_corner.mp4"
 
 
 def extract_keypoints(video):

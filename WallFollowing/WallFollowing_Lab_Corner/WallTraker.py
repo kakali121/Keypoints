@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
 LastEditors  : Karen Li
-LastEditTime : 2023-09-02 16:17:24
+LastEditTime : 2023-09-03 16:23:27
 FilePath     : /WallFollowing_Lab_Corner/WallTraker.py
 Description  : Wall traker of the robot
 '''
@@ -15,7 +15,7 @@ import math
 import cv2
 
 ### Constants ###   
-DEMO_VIDEO = "corner.mp4"                         # The path to the demo video
+DEMO_VIDEO = "lab_corners.mp4"                         # The path to the demo video
 MIN_NUM_MATCHES = 5                              # The minimum number of matches to be considered a match
 
 class WallTraker:
@@ -90,7 +90,8 @@ class WallTraker:
         else: 
             # Calculate the difference between the current y ratio and the accumulated y ratio
             y_ratio_diff = abs((new_y_ratio - self.accumulated_y_ratio) / self.accumulated_y_ratio) 
-            if y_ratio_diff > 10: # If the difference is too big, discard the current y ratio
+            print("y_ratio_diff: ", y_ratio_diff)
+            if y_ratio_diff > 5: # If the difference is too big, discard the current y ratio
                 print("Warning: Broken Match!")
                 print("Discard y ratio: " + str(new_y_ratio))
                 return self.accumulated_y_ratio
@@ -101,7 +102,7 @@ class WallTraker:
             self.accumulated_y_ratio = self.accumulated_y_ratio * (1-dynamic_gain) + new_y_ratio * dynamic_gain
         return self.accumulated_y_ratio
     
-    def chase_carrot(self)-> Tuple[int, float, int, bool]:
+    def chase_carrot(self)-> Tuple[int, float, int, bool, float]:
         '''
         description: Let robot chase the carrot
         param       {*} self: -
@@ -110,7 +111,7 @@ class WallTraker:
         query_coordinate, train_coordinate, num_matches = self.robot_state.get_match_coordinate(self.carrot_state)
         # If no match is found, return 0 velocity
         print("num_matches: ", num_matches)
-        if num_matches <= MIN_NUM_MATCHES: return 0, 1, num_matches, True
+        if num_matches <= MIN_NUM_MATCHES: return 0, 1, num_matches, True, 1
         # Calculate the average x and y difference
         robot_center_x, robot_center_y, robot_x_radius, robot_y_radius = self.robot_state.compute_confidence_ellipse(query_coordinate)
         carrot_center_x, carrot_center_y, carrot_x_radius, carrot_y_radius = self.carrot_state.compute_confidence_ellipse(train_coordinate)
@@ -119,8 +120,8 @@ class WallTraker:
         y_ratio = robot_y_radius / carrot_y_radius
         # Calculate the moving average of the y ratio
         processed_y_ratio = self._calculate_moving_average_y(y_ratio)
-        print("ellipse_ratio: ", robot_ellipse_ratio)
-        return x_diff, processed_y_ratio, num_matches, False
+        print("y_ratio: ", y_ratio)
+        return x_diff, processed_y_ratio, num_matches, False, y_ratio
     
     def next_carrot(self) -> int:
         '''

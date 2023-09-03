@@ -2,7 +2,7 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Karen Li
-LastEditTime : 2023-09-02 16:36:00
+LastEditTime : 2023-09-03 17:11:56
 FilePath     : /WallFollowing_Lab_Corner/Robot.py
 Description  : This is the class for the robot
 '''
@@ -16,7 +16,7 @@ import socket
 ### Constants ###
 MIN_V = 700 # Minimum velocity of the robot to overcome friction
 MAX_V = 900 # Maximum velocity of the robot 
-BANGBANG_V = [800, 700, 800]
+BANGBANG_V = [1200, 800, 800]
 ZERO_COMMAND = 'CMD_MOTOR#0#0#0#0\n' # Command to stop the robot
 
 class Robot:
