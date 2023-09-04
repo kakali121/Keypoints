@@ -1,356 +1,150 @@
-'''
-Author       : Karen Li
-Date         : 2023-09-02 11:02:41
-LastEditors  : Karen Li
-LastEditTime : 2023-09-04 08:28:32
-FilePath     : /GroundMapping/GroundMapping_Lab_Circular/Timeline/timeline.py
-Description  : 
-'''
-import cv2
-import math
-import time
-import numpy as np
-from cv2 import norm
-import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
+import cv2
 
-WINDOW_T = 20
-VIDEO_FILE = 'circular.mp4'
-# IMAGE_FILE = '1.jpg'
-MAX_FRAMES = 500                        # large numbers will cover the whole video
-SHORTEST_LENGTH = 10                    # min 10 frames
-MAX_MATCH_DISTANCE = 20                 # match threshold
-
-# Create an ORB object and detect keypoints and descriptors in the template
-orb = cv2.ORB_create()
-# Create a brute-force matcher object
-bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
-
-def keypoints_from_image_file(image_file):
-    img = cv2.imread(image_file)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect keypoints and compute descriptors in the frame
-    keypoints, des = orb.detectAndCompute(gray, None)
-    # print(keypoints)
-    # img_with_keypoints = cv2.drawKeypoints(img, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    # Display the image with keypoints
-    # plt.imshow(img_with_keypoints)
-    # plt.show()
-    return keypoints, des, img
+### Constants ###
+# Path to the descriptor files
+DESCRIPTOR_FILE_PATH = "side_demo_kpt_des"      
+# The maximum distance between two matched keypoints
+MAX_MATCH_DISTANCE = 40             
+# THe nummber of frames in an interval
+FRAMES_PER_INTERVAL = 12
+# Maximum number of intervals
+MAX_INTERVALS = 300
+# Create a BFMatcher object with Hamming distance (suitable for ORB, BRIEF, etc.)
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)            
 
 
-def find_times(time_kps):
-    times = []
-    for s, e, kpts, dess in time_kps:
-        if not s in times:
-            times.append(s)
-        if not e in times:
-            times.append(e)
-    return sorted(times)
+def load_kpt_des() -> list:
+    """
+    description: Load KPT descriptors from the files.
+    return      {list}: A list containing the descriptors for each interval.
+    """
+    # List of all the descriptors
+    descriptors = []
+    # Load and save all the descriptors from the file
+    for i in range(MAX_INTERVALS):
+        file_name = ("../" + DESCRIPTOR_FILE_PATH + "/" + DESCRIPTOR_FILE_PATH + str(i + 1) + ".yml")
+        file_storage = cv2.FileStorage(file_name, cv2.FILE_STORAGE_READ)
+        # Load the descriptors from the file
+        descriptors.append(file_storage.getNode("descriptors").mat())
+        file_storage.release()
+    return descriptors
 
 
-def descriptors_per_interval(times, time_kps, frame_kps, frame_des, plot=False):
-    # For each interval in a sequence, find the keypoints
-    intervals_in_sequence = []
-    for s1, e1 in zip(times[:-1], times[1:]):
-        intervals_in_sequence.append((s1, e1, frame_kps[s1], frame_des[s1]))
-        # print(s1, e1, len(interval_descriptors))
-    if plot:
-        plt.plot([len(dess) for s, e, kpts, dess in intervals_in_sequence])
-        plt.title("Number of Keypoints per interval")
-        plt.show()
-    return intervals_in_sequence
+def compare_descriptors(descriptors1: np.ndarray, descriptors2: np.ndarray) -> list:
+    """
+    description: Compare two sets of descriptors using BFMatcher.
+    param       {np.ndarray} descriptors1: Descriptors from the first set.
+    param       {np.ndarray} descriptors2: Descriptors from the second set.
+    return      {list}: A list containing pairs of matching keypoints' indices (queryIdx, trainIdx).
+    """
+    # Match descriptors from two intervals
+    raw_matches = bf.match(descriptors1, descriptors2)
+    # Extract pairs of matching keypoints' indices from the matches
+    raw_matches = [m for m in raw_matches if m.distance < MAX_MATCH_DISTANCE]
+    matches = [(match.queryIdx, match.trainIdx) for match in raw_matches]
+    return matches
 
 
-def find_long_paths_T(G):
-    # Invert the graph
-    G_inv = nx.DiGraph()
-    G_inv.add_edges_from([(v, u) for u, v in G.edges])
-    visited_flag = {v: 0 for v in G.nodes}
-    paths = []
-    # Run topological sort
-    sorted_vertices = list(nx.topological_sort(G_inv))
-    # for each subtree
-    for v in sorted_vertices:
-        # v was already visited?
-        if visited_flag[v]:
-            continue
-        v_decendents = nx.descendants(G_inv, v)
-        oldest_t = math.inf
-        oldest_v = None
-        for u in v_decendents:
-            # mark as visited
-            visited_flag[u] = 1
-            # find the oldest
-            t, _ = u
-            if t < oldest_t:
-                oldest_t = t
-                oldest_v = u
-        if oldest_v is None:
-            continue
-        path = nx.shortest_path(
-            G, source=oldest_v, target=v
-        )  # FIXME Switch to longest path
-        paths.append(path)
-    # Find the paths with length greater than a threshhold. remove the source and sink nodes.
-    long_paths = [p for p in paths if (path[-1][0] - path[0][0]) >= SHORTEST_LENGTH]
-    print("Long paths:", len(long_paths))
-    # sort by frame time
-    long_paths = sorted(long_paths, key=lambda x: x[0])
-    return long_paths
+def process_data(descriptors: np.ndarray) -> np.ndarray:
+    """
+    description: Process the data to get the matches between each pair of intervals.
+    param       {np.ndarray} descriptors: DataFrame containing the descriptors for each interval.
+    return      {np.ndarray}: A list containing the matches between each pair of intervals.
+    """
+    # List of all the matches
+    all_matches = []
+    # Extract pairs of matching keypoints' indices from the matches
+    for i in range(len(descriptors) - 1):
+        current_matches = compare_descriptors(descriptors[i], descriptors[i + 1])
+        all_matches.append(current_matches)
+    return all_matches
 
 
-def find_best_matches(frame_des1, frame_des2):
-    # matches(query_this_image, train)
-    matches = bf.match(frame_des1, frame_des2)
-    # Best matches: Filter by max distance
-    matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
-    best_edges = [(m.queryIdx, m.trainIdx) for m in matches]
-    return best_edges
+def compare_matches(all_matches: np.ndarray, descriptors: np.ndarray) -> np.ndarray:
+    """
+    description: Compare the matches between each pair of intervals.
+    param       {np.ndarray} all_matches: DataFrame containing the matches between each pair of intervals.
+    return      {np.ndarray}: A list containing the matches between each pair of intervals.
+    """
+    # List to store the continuous matches and the terminal matches
+    continues_keypoints = []
+    terminated_keypoints = []
+    # Iterate through all pairs of matching keypoints' indices from the interval
+    for i, matches in enumerate(all_matches):
+        # Extract the indices of the matching keypoints
+        match_pair_1, match_pair_2 = zip(*matches)
+        # Extract the indices of the matching keypoints from the last interval
+        last_matches = [x[1] for x in continues_keypoints]
+        # Iterate through all the keypoints in the current interval
+        for j in range(len(descriptors[i])):
+            if j in match_pair_1:  # Check if the keypoint is in the current match with the next interval
+                if j in last_matches: # Check if the keypoint is in the last match with the previous interval
+                    # Get the index of the keypoint in the last match
+                    index = last_matches.index(j)
+                    # Update the last match index of the continuous keypoint with the index current interval
+                    continues_keypoints[index][1] = match_pair_2[match_pair_1.index(j)]
+                    # Update the last interval index of the continuous keypoint with the index current interval
+                    continues_keypoints[index][3] = i + 2
+                else:
+                    
+                    continues_keypoints.append([j, match_pair_2[match_pair_1.index(j)], i + 1, i + 2])
+            else:
+                if j in last_matches:
+                    terminated_keypoints.append(continues_keypoints[last_matches.index(j)])
+                else:
+                    terminated_keypoints.append([j, j, 1 + i, 1 + i])
+
+        # Remove the keypoints in consecutive matches that has terminated
+        continues_keypoints = [x for x in continues_keypoints if x not in terminated_keypoints]
+    terminated_keypoints.extend(continues_keypoints)
+    return terminated_keypoints
 
 
-def sequential_matches_graph(frame_des, T=1):
-    edges = []  # ((time, kp_id), (time, kp_id))
-    for i in range(len(frame_des) - T):
-        for t in range(1, T + 1):
-            # matches(query_this_image, train)
-            matches = bf.match(frame_des[i], frame_des[i + t])
-            # Best matches: Filter by max distance
-            matches = [m for m in matches if m.distance < MAX_MATCH_DISTANCE]
-            best_edges = [(m.queryIdx, m.trainIdx) for m in matches]
-            for e in best_edges:
-                edges.append(((i, e[0]), (i + t, e[1])))
-    # Create an empty graph
-    G = nx.DiGraph()
-    # Add the edges to the graph
-    G.add_edges_from(edges)
-    return G
+def plot_timeline(processed_data: np.ndarray):
+    default_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    fig, ax = plt.subplots()
+    for idx, item in enumerate(processed_data):
+        # Convert intervals to frames
+        start_frame = (item[2] - 1) * FRAMES_PER_INTERVAL
+        end_frame = item[3] * FRAMES_PER_INTERVAL
+        color = default_colors[idx % len(default_colors)]
+        ax.hlines(idx, start_frame, end_frame, colors=color, lw=2)
 
+    ax.set_xlabel("Frame")
+    ax.set_ylabel("Keypoint")
+    ax.set_title("Timeline")
+    # ax.set_yticks(np.arange(0, len(processed_data)))
+    max_frame = FRAMES_PER_INTERVAL * MAX_INTERVALS
+    ax.set_xlim(0, max_frame)
 
-def find_timelines_from_video(frame_des, T=WINDOW_T):
-    G = sequential_matches_graph(frame_des, T)
-    # Print some information about the graph
-    print("Number of nodes:", G.number_of_nodes())
-    print("Number of edges:", G.number_of_edges())
-    # Find the long paths that pass a threshold
-    long_paths = find_long_paths_T(G)
-    # Save video as a mp4 file
-    # save_kp_video(frames, frame_kps, long_paths)
-    return long_paths
+    # Setting gridlines at the start of each interval
+    # ax.set_xticks(np.arange(0, max_frame + 1, FRAMES_PER_INTERVAL))
 
+    # # Shade every frame section
+    # for i in range(1, max_frame + 1):
+    #     if i % 2 == 0:
+    #         ax.axvspan(i - 1, i, facecolor="lightgray", alpha=0.5)
 
-def extract_keypoints(video, max_frames):
-    # Create a VideoCapture object to read the video file
-    cap = cv2.VideoCapture(video)
-    # Extract all keypoints and descriptors by frame
-    frame_kps, frame_des = [], []
-    video_frames = []
-    k = 0
-    # Loop through the video frames
-    while cap.isOpened() and k < max_frames:
-        # Read a frame from the video
-        ret, frame = cap.read()
-        # Check if the frame was successfully read
-        if ret:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            kp2, des2 = orb.detectAndCompute(gray, None)
-            if des2 is None:
-                print("No keypoints/descriptors in frame ", k)
-                continue
-            frame_kps.append(kp2)
-            frame_des.append(des2)
-            video_frames.append(frame)
-            k += 1
-        else:
-            break
-    print("k =", k)
-    cap.release()
-    return frame_kps, frame_des, video_frames
-
-
-def time_descriptor(path, frame_kpts, frame_des):
-    start = path[0][0]
-    end = path[-1][0]
-    # TODO include x and y
-    descriptor = None
-    # first element in path
-    t, kp_id = path[0]
-    descriptor = frame_des[t][kp_id]
-    kpts = frame_kpts[t][kp_id]
-    return start, end, kpts, descriptor
-
-
-def kp_path(frame_kps, path, time_stop=-1):
-    x, y = [], []
-    for vertex in path:
-        t, kp_id = vertex
-        kp = frame_kps[t][kp_id]
-        # print(kp.pt)
-        x.append(kp.pt[0])
-        y.append(kp.pt[1])
-        if t >= time_stop:
-            break
-    return x, y
-
-
-def time_in_path(time, path, frame_kps):
-    for vertex in path:
-        t, kp_id = vertex
-        if t >= time:
-            kp = frame_kps[t][kp_id]
-            # print(kp.pt)
-            px = kp.pt[0]
-            py = kp.pt[1]
-            return px, py
-
-
-def save_kp_video(frames, frame_kps, kp_paths):
-    intervals = [(path[0][0], path[-1][0]) for path in kp_paths]
-    color_paths = [tuple(map(int, np.random.randint(0, 255, size=3))) for _ in kp_paths]
-    # Create a VideoWriter object to save the output video
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    width = len(frames[0][0])
-    height = len(frames[0])
-    # print(width, height)
-    fps = 5
-    out = cv2.VideoWriter('output.mp4', fourcc, fps, (width, height))
-    for t, frame in enumerate(frames):
-        for i, (start, end) in enumerate(intervals):
-            if not (start <= t <= end):
-                continue
-            path = kp_paths[i]
-            x, y = kp_path(frame_kps, path, t)
-            cv_path = np.array([point for point in zip(x, y)], dtype=np.int32)
-            # Generate a random color for the polyline
-            color = color_paths[i]
-            # Draw
-            cv2.polylines(frame, [cv_path], isClosed=False, color=color, thickness=2)
-            point = np.array(time_in_path(t, path, frame_kps), dtype=np.int32)
-            cv2.circle(frame, point, 5, color, -1)
-        # cv2.imshow('Video Frame', frame)
-        out.write(frame)
-        # if cv2.waitKey(25) & 0xFF == ord('q'):
-        #     break
-        #
-        # sleep(.1)
-    out.release()
-
-
-def plot_kp_timeline(paths: list, save_plot=True) -> None:
-    intervals = [(path[0][0], path[-1][0]) for path in paths]
-    for i, (start, end) in enumerate(intervals):
-        plt.plot([start, end], [i, i])
-    plt.title("Keypoint timeline")
-    plt.xlabel("Frame number")
-    plt.ylabel("Keypoint id")
     plt.grid()
-
-    if save_plot:
-        plt.savefig("timeline.png")
-    else:
-        plt.show()
+    plt.show()
+    # Save plot
+    fig.savefig("timeline.pdf")
 
 if __name__ == "__main__":
-    # ## Extract keypoints
-    frame_kps, frame_des, frames = extract_keypoints(VIDEO_FILE, max_frames=MAX_FRAMES)
-
-    # ## Find sequential match
-    G = sequential_matches_graph(frame_des, WINDOW_T)
-    print("Number of nodes:", G.number_of_nodes())
-    print("Number of edges:", G.number_of_edges())
-
-    # ## Find the long paths
-    long_paths = find_long_paths_T(G)
-
-    # ## Plot keypoint timeline
-    plot_kp_timeline(long_paths)
-
-    # ## Save video with keypoints
-    save_kp_video(frames, frame_kps, long_paths)
-
-    # ## Find descriptor - first frame
-    time_kps = [time_descriptor(path, frame_kps, frame_des) for path in long_paths]
-
-    # ## Make time interval
-    times = find_times(time_kps)
-
-    # ## Find interval descriptor
-    intervals_in_sequence = descriptors_per_interval(
-        times, time_kps, frame_kps, frame_des, plot=True
-    )
-    print("Number of intervals:", len(intervals_in_sequence))
-
-    #### Find best match ################################################################################
-
-    # # ## Read image
-    # img_keypoints, img_descriptors, img = keypoints_from_image_file(IMAGE_FILE)
-    # # img_keypoints, img_descriptors, img = frame_kps[20], frame_des[20], frames[20]
-
-    # # find the interval that matches the most with the image descriptors
-    # sum_distances = []
-    # best_match = None
-    # best_interval_id = -1
-    # best_sq_dist = math.inf
-    # best_kpts = None
-    # best_des = None
-
-    # for i, (s, e, kpts, descriptors) in enumerate(intervals_in_sequence):
-    #     matches = bf.match(img_descriptors, descriptors)
-    #     # matches = sorted(matches, key=lambda x: x.distance)
-    #     # print(s, e, len(matches))
-    #     sum_distance = sum([m.distance for m in matches]) / len(matches)
-    #     sum_distances.append(sum_distance)
-    #     if sum_distance <= best_sq_dist:
-    #         best_match = matches
-    #         best_sq_dist = sum_distance
-    #         best_interval_id = i
-    #         best_kpts = kpts
-    #         best_des = descriptors
-    #         # print("len best match", len(best_match))
-    # # print(sum_distances)
-    # x = np.hstack([(s, e) for (s, e, kpts, img_descriptors) in intervals_in_sequence])
-    # y = np.hstack([(dist, dist) for dist in sum_distances])
-    # plt.plot(x, y, '-')
-    # for (s, e, kpts, img_descriptors), dist in zip(intervals_in_sequence, sum_distances):
-    #     x = [s,e]
-    #     # print(x)
-    #     y = [dist, dist]
-    #     plt.plot(x,y)
-    # # plt.plot(sum_distances)
-    # plt.title("Average distance of descriptors in interval")
-    # plt.show()
-
-    # # best interval
-    # bs, be, bkpts, bdess = intervals_in_sequence[best_interval_id]
-
-    # # best_frame = frames[bs]
-    # # best_kpts = frame_kps[bs]
-    # # bdess = frame_des[bs]
-    # # best_kpts = frame_kps[bs]
-    # # best_match = bf.match(img_descriptors, bdess)
-    # print('Number of best matches', len(best_match), " time =", bs, "to", be)
-    # # best_match = sorted(best_match, key=lambda x: x.distance)[:50]
-    # # frame_matches = cv2.drawMatches(img, img_keypoints, best_frame, best_kpts, best_match, None,
-    # #                                 flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    # # # Plot best
-    # # plt.imshow(frame_matches)
-    # # for match in best_match:
-    # #     # Get the keypoints from the matches
-    # #     img1_idx = match.queryIdx
-    # #     img2_idx = match.trainIdx
-    # #     (x1, y1) = img_keypoints[img1_idx].pt
-    # #     (x2, y2) = best_kpts[img2_idx].pt
-
-    # #     # Draw a line between the keypoints with thicker line width
-    # #     plt.plot([x1, x2 + img.shape[1]], [y1, y2], linewidth=2, alpha=0.8)
-
-    # # # Display the frame with matches
-    # # # cv2.imshow('Frame with matches', frame_matches)
-    # # #
-    # # # cv2.waitKey(0)
-    # # # cv2.destroyAllWindows()
-
-    # # # break
-    # # plt.show()
-    # # print(len(time_kps))
+    # Load the descriptors from the file
+    print("Loading descriptors...")
+    descriptors = load_kpt_des()
+    print(len(descriptors), "descriptors loaded.")
+    # Process the data to get the matches between each pair of intervals
+    print("Processing data...")
+    all_matches = process_data(descriptors)
+    print(len(all_matches), "pairs of matches found.")
+    print("Comparing matches...")
+    # Compare the matches between each pair of intervals
+    processed_data = compare_matches(all_matches, descriptors)
+    print(len(processed_data), "pairs of continuous matches found.")
+    print("Plotting timeline...")
+    # Plot the timeline
+    plot_timeline(processed_data)   
