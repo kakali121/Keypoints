@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-03 19:36:54
+LastEditTime : 2023-09-04 17:32:02
 FilePath     : /WallFollowing_Lab_Corner/WallTraker.py
 Description  : Wall traker of the robot
 '''
@@ -15,8 +15,9 @@ import math
 import cv2
 
 ### Constants ###   
-DEMO_VIDEO = "lab_corners.mp4"                         # The path to the demo video
+DEMO_VIDEO = "./Timeline/corner.mp4"                    # The path to the demo video
 MIN_NUM_MATCHES = 10                              # The minimum number of matches to be considered a match
+λ = 10                                            # The weight of smoothing the y ratio
 
 class WallTraker:
     def __init__(self, initial_frame: np.array, total_interval: int, interval_length: int, skip_interval: int) -> None:
@@ -96,8 +97,7 @@ class WallTraker:
                 print("Discard y ratio: " + str(new_y_ratio))
                 return self.accumulated_y_ratio
             # The dynamic gain is the exponential of the difference
-            # dynamic_gain = 1/(y_ratio_diff ** 1.7)
-            dynamic_gain = 1/math.exp(y_ratio_diff) 
+            dynamic_gain = 1/(λ**y_ratio_diff)
             # Calculate the new accumulated y ratio
             self.accumulated_y_ratio = self.accumulated_y_ratio * (1-dynamic_gain) + new_y_ratio * dynamic_gain
         return self.accumulated_y_ratio

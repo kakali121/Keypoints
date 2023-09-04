@@ -2,17 +2,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-### Constants ###
-# Path to the descriptor files
-DESCRIPTOR_FILE_PATH = "side_demo_kpt_des"      
-# The maximum distance between two matched keypoints
-MAX_MATCH_DISTANCE = 40             
-# THe nummber of frames in an interval
-FRAMES_PER_INTERVAL = 12
-# Maximum number of intervals
-MAX_INTERVALS = 300
-# Create a BFMatcher object with Hamming distance (suitable for ORB, BRIEF, etc.)
-bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)            
+VIDEO_FILE = 'lab_corner.mp4'
+# IMAGE_FILE = '1.jpg'
+MAX_FRAMES = 2400                       # large numbers will cover the whole video
+WINDOW_T = 20                           # maximum time interval between frames 
+SHORTEST_LENGTH = 10                    # min 10 frames in a path
+MAX_MATCH_DISTANCE = 15                 # match threshold hamming distance  
+
+# Create an ORB object and detect keypoints and descriptors in the template
+orb = cv2.ORB_create()
+# Create a brute-force matcher object
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 
 def load_kpt_des() -> list:

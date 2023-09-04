@@ -2,7 +2,7 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-03 19:58:35
+LastEditTime : 2023-09-04 15:58:06
 FilePath     : /WallFollowing_Lab_Corner/Robot.py
 Description  : This is the class for the robot
 '''
@@ -28,7 +28,7 @@ class Robot:
         self.robot_id = 121
         if not self.optitrack_init():
             print('### Optitrack is cannot be initialized ###')
-        self.file = open('test_data.txt', 'w')  # Open the file in write mode
+        self.file = open('./Results/test_data.txt', 'w')  # Open the file in write mode
         self.positions = {}
         self.rotations = {}
         if connect:

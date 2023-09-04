@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-12 12:46:11
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-03 19:51:35
+LastEditTime : 2023-09-04 17:33:54
 FilePath     : /WallFollowing_Lab_Corner/State.py
 Description  : Class to represent a state
 '''
