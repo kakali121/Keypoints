@@ -1,8 +1,8 @@
 '''
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
-LastEditors  : Karen Li
-LastEditTime : 2023-09-03 17:11:56
+LastEditors  : Hanqing Qi
+LastEditTime : 2023-09-03 19:58:35
 FilePath     : /WallFollowing_Lab_Corner/Robot.py
 Description  : This is the class for the robot
 '''
@@ -16,14 +16,14 @@ import socket
 ### Constants ###
 MIN_V = 700 # Minimum velocity of the robot to overcome friction
 MAX_V = 900 # Maximum velocity of the robot 
-BANGBANG_V = [1200, 800, 800]
+BANGBANG_V = [1100, 800, 800]
 ZERO_COMMAND = 'CMD_MOTOR#0#0#0#0\n' # Command to stop the robot
 
 class Robot:
     def __init__(self, IP_adress: str, connect: bool) -> None:
         self.IP_adress = IP_adress
         self.connected = False
-        self.clientAddress = "192.168.0.52"
+        self.clientAddress = "192.168.0.46"
         self.optitrackServerAddress = "192.168.0.4"
         self.robot_id = 121
         if not self.optitrack_init():
@@ -116,17 +116,17 @@ class Robot:
             command = ZERO_COMMAND
         else:
             # Implement bang-bang control
-            if v > 30:
-                if ω > 40:
+            if v > 20:
+                if ω > 30:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
-                elif ω < -40:
+                elif ω < -30:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0])
                 else:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[1], BANGBANG_V[1], BANGBANG_V[1], BANGBANG_V[1])
-            elif v < -30:
-                if ω > 40:
+            elif v < -20:
+                if ω > 30:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(BANGBANG_V[0], BANGBANG_V[0], -BANGBANG_V[0], -BANGBANG_V[0])
-                elif ω < -40:
+                elif ω < -30:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[0], -BANGBANG_V[0], BANGBANG_V[0], BANGBANG_V[0])
                 else:
                     command = 'CMD_MOTOR#%d#%d#%d#%d\n'%(-BANGBANG_V[1], -BANGBANG_V[1], -BANGBANG_V[1], -BANGBANG_V[1])

@@ -1,8 +1,8 @@
 '''
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
-LastEditors  : Karen Li
-LastEditTime : 2023-09-03 16:23:27
+LastEditors  : Hanqing Qi
+LastEditTime : 2023-09-03 19:36:54
 FilePath     : /WallFollowing_Lab_Corner/WallTraker.py
 Description  : Wall traker of the robot
 '''
@@ -16,7 +16,7 @@ import cv2
 
 ### Constants ###   
 DEMO_VIDEO = "lab_corners.mp4"                         # The path to the demo video
-MIN_NUM_MATCHES = 5                              # The minimum number of matches to be considered a match
+MIN_NUM_MATCHES = 10                              # The minimum number of matches to be considered a match
 
 class WallTraker:
     def __init__(self, initial_frame: np.array, total_interval: int, interval_length: int, skip_interval: int) -> None:

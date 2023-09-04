@@ -1,8 +1,8 @@
 '''
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
-LastEditors  : Karen Li
-LastEditTime : 2023-09-03 17:14:21
+LastEditors  : Hanqing Qi
+LastEditTime : 2023-09-03 19:51:29
 FilePath     : /WallFollowing_Lab_Corner/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''
@@ -20,7 +20,7 @@ STREAMING_URL = "http://192.168.0.204:1234/stream.mjpg"  # Video streaming url
 
 TOTAL_INTERVALS = 300            # Total number of intervals in the demo video
 INTERVAL_LENGTH = 12             # Number of frames in a timeline interval
-SKIP_INTERVAL = 3                # Interval between donkey and carrot
+SKIP_INTERVAL = 2                # Interval between donkey and carrot
 
 V_GAIN = 3                       # Gain of velocity
 W_GAIN = 400                     # Gain of angular velocity
@@ -64,7 +64,6 @@ def plot_speeds():
     plt.title('Angular Velocity (ω) over Time')
     plt.xlabel('Time')
     plt.ylabel('Values')
-    plt.legend()
     plt.grid(True)
     plt.savefig("omega_plot.pdf")
 
@@ -81,7 +80,7 @@ def plot_speeds():
     plt.figure(3)  # Create another new figure window
     plt.plot(RAW_ω)
     # Plot the line y=1
-    plt.plot([0, TOTAL_INTERVALS], [1, 1], color='red', linestyle='dashed', linewidth=1)
+    plt.plot([0, len(RAW_ω),], [1, 1], color='red', linestyle='dashed', linewidth=1)
     plt.title('Raw Ellipse Ratio over Time')
     plt.xlabel('Time')
     plt.ylabel('Raw Ellipse Ratio')
