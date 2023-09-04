@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-MAX_FRAMES = 300         # large numbers will cover the whole video
-INTERVAL = 3             # 12 frames per inverval 
+MAX_FRAMES = 500         # large numbers will cover the whole video
+INTERVAL = 10            # 12 frames per inverval 
 MAX_MATCH_DISTANCE = 20  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -61,7 +61,7 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
     # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 5
-    out = cv2.VideoWriter(video, fourcc, fps, (640, 480))
+    out = cv2.VideoWriter(video, fourcc, fps, (400, 300))
 
     kpts_cur, des_cur = [], []
     kpts_fin, des_fin = [], []

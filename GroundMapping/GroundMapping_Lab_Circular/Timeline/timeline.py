@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-09-02 11:02:41
 LastEditors  : Karen Li
-LastEditTime : 2023-09-02 11:02:42
+LastEditTime : 2023-09-04 08:28:32
 FilePath     : /GroundMapping/GroundMapping_Lab_Circular/Timeline/timeline.py
 Description  : 
 '''
@@ -14,11 +14,11 @@ from cv2 import norm
 import networkx as nx
 import matplotlib.pyplot as plt
 
-WINDOW_T = 10
+WINDOW_T = 20
 VIDEO_FILE = 'circular.mp4'
 # IMAGE_FILE = '1.jpg'
-MAX_FRAMES = 300                        # large numbers will cover the whole video
-SHORTEST_LENGTH = 3                     # min 5
+MAX_FRAMES = 500                        # large numbers will cover the whole video
+SHORTEST_LENGTH = 10                    # min 10 frames
 MAX_MATCH_DISTANCE = 20                 # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -94,7 +94,7 @@ def find_long_paths_T(G):
         )  # FIXME Switch to longest path
         paths.append(path)
     # Find the paths with length greater than a threshhold. remove the source and sink nodes.
-    long_paths = [p for p in paths if len(p) >= SHORTEST_LENGTH]
+    long_paths = [p for p in paths if (path[-1][0] - path[0][0]) >= SHORTEST_LENGTH]
     print("Long paths:", len(long_paths))
     # sort by frame time
     long_paths = sorted(long_paths, key=lambda x: x[0])
