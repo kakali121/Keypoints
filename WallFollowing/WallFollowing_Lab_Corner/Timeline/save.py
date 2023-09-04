@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-MAX_FRAMES = 3600        # large numbers will cover the whole video
+MAX_FRAMES = 4680        # large numbers will cover the whole video
 INTERVAL = 12            # 12 frames per inverval 
 MAX_MATCH_DISTANCE = 40  # match threshold
 
@@ -10,7 +10,7 @@ orb = cv2.ORB_create(nfeatures=1000)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-VIDEO = "../lab_corners.mp4"
+VIDEO = "corner.mp4"
 # VIDEO = "./Videos/lab_corner.mp4"
 
 

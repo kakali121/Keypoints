@@ -20,7 +20,7 @@ def receive_rigid_body_frame(robot_id, position, rotation_quaternion):
 
 
 if __name__ == "__main__":
-    clientAddress  = "192.168.0.52"
+    clientAddress  = "192.168.0.46"
     optitrackServerAddress = "192.168.0.4"
     robot_id = 121
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 20
     out = cv2.VideoWriter(NAME, fourcc, fps, (400, 300))
-    with open('data.txt', 'w') as file:  # Open the file in write mode
+    with open('record_data.txt', 'w') as file:  # Open the file in write mode
         start_time = time.time()  # Start the timer
         while cap.isOpened():
             # Read a frame from the video

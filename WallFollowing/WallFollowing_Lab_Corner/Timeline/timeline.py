@@ -6,7 +6,7 @@ from cv2 import norm
 import networkx as nx
 import matplotlib.pyplot as plt
 
-VIDEO_FILE = 'lab_corner.mp4'
+VIDEO_FILE = 'corner.mp4'
 # IMAGE_FILE = '1.jpg'
 MAX_FRAMES = 2400                       # large numbers will cover the whole video
 WINDOW_T = 20                           # maximum time interval between frames 

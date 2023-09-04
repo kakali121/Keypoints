@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-03 19:51:29
+LastEditTime : 2023-09-04 17:34:09
 FilePath     : /WallFollowing_Lab_Corner/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 '''
@@ -18,7 +18,7 @@ import cv2
 IP_ADDRESS = '192.168.0.204'     # IP address of the robot
 STREAMING_URL = "http://192.168.0.204:1234/stream.mjpg"  # Video streaming url
 
-TOTAL_INTERVALS = 300            # Total number of intervals in the demo video
+TOTAL_INTERVALS = 390            # Total number of intervals in the demo video
 INTERVAL_LENGTH = 12             # Number of frames in a timeline interval
 SKIP_INTERVAL = 2                # Interval between donkey and carrot
 
@@ -45,8 +45,8 @@ lost_count = 0     # The number of times the robot lost the wall
 # Create a video writer object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 fps = 20
-out1 = cv2.VideoWriter("robot.mp4", fourcc, fps, (400, 300))
-out2 = cv2.VideoWriter("carrot.mp4", fourcc, fps, (400, 300))
+out1 = cv2.VideoWriter("./Results/robot.mp4", fourcc, fps, (400, 300))
+out2 = cv2.VideoWriter("./Results/carrot.mp4", fourcc, fps, (400, 300))
 
 def plot_speeds():
     # # Plot v values
@@ -65,7 +65,7 @@ def plot_speeds():
     plt.xlabel('Time')
     plt.ylabel('Values')
     plt.grid(True)
-    plt.savefig("omega_plot.pdf")
+    plt.savefig("./Results/omega_plot.pdf")
 
     # Plot number of matches
     plt.figure(2)  # Create another new figure window
@@ -74,7 +74,7 @@ def plot_speeds():
     plt.xlabel('Time')
     plt.ylabel('Number of Matches')
     plt.grid(True)
-    plt.savefig("match_plot.pdf")
+    plt.savefig("./Results/match_plot.pdf")
 
     # Plot raw ellipse ratio
     plt.figure(3)  # Create another new figure window
@@ -85,9 +85,11 @@ def plot_speeds():
     plt.xlabel('Time')
     plt.ylabel('Raw Ellipse Ratio')
     plt.grid(True)
-    plt.savefig("raw_ellipse_plot.pdf")
+    plt.savefig("./Results/raw_ellipse_plot.pdf")
 
     # Now show all figures
+    # Show the plot at 4 corners of the screen
+    plt.subplots_adjust(wspace=0.5, hspace=0.5)
     plt.show()
 
 ### Main Loop ###
