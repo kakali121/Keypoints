@@ -88,7 +88,7 @@ def compare_matches(all_matches: np.ndarray, descriptors: np.ndarray) -> np.ndar
                     # Update the last interval index of the continuous keypoint with the index current interval
                     continues_keypoints[index][3] = i + 2
                 else:
-                    
+                    # Add the continuous keypoint to the list
                     continues_keypoints.append([j, match_pair_2[match_pair_1.index(j)], i + 1, i + 2])
             else:
                 if j in last_matches:
