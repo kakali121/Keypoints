@@ -7,7 +7,7 @@ from Optitrack_dependency.util import quaternion_to_euler_angle_vectorized1
 positions = {}
 rotations = {}
 
-NAME = 'corner.mp4'
+NAME = '../corner.mp4'
 
 
 # This is a callback function that gets connected to the NatNet client. It is called once per rigid body per frame

@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-07 18:08:01
+LastEditTime : 2023-09-08 19:24:30
 FilePath     : /WallFollowing_Lab_Corner_2/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 """
@@ -18,18 +18,21 @@ import cv2
 IP_ADDRESS = "192.168.0.204"  # IP address of the robot
 STREAMING_URL = "http://192.168.0.204:1234/stream.mjpg"  # Video streaming url
 
-# TOTAL_INTERVALS = 390            # Total number of intervals in the demo video
-# INTERVAL_LENGTH = 12             # Number of frames in a timeline interval
-# SKIP_INTERVAL = 2                # Interval between donkey and carrot
-
+DEMO_VIDEO = "corner.mp4"  # name of the demo video
 TOTAL_INTERVALS = 500  # Total number of intervals in the demo video
 INTERVAL_LENGTH = 10  # Number of frames in a timeline interval
 SKIP_INTERVAL = 2  # Interval between donkey and carrot
+
+MAX_HUMMING_DISTANCE = 50  # Max humming distance
+MIN_NUM_MATCHES = 10  # Min number of matches
+λ = 10  # λ of the dynamic gain
 
 V_GAIN = 3  # Gain of velocity
 W_GAIN = 400  # Gain of angular velocity
 
 CONNECT_TO_ROBOT = True  # Whether to connect to the robot
+
+### Lists for Plotting ###
 V_VALUES = []  # A list of linear velocities
 ω_VALUES = []  # A list of angular velocities
 NUM_MATCH = []  # A list of number of matches
@@ -45,7 +48,7 @@ myrobot = Robot.Robot(IP_ADDRESS, CONNECT_TO_ROBOT)
 streaming_video = cv2.VideoCapture(STREAMING_URL)
 # Create a wall tracker object
 ret, robot_frame = streaming_video.read()  # Take a frame from the video stream
-wall_tracker = WallTraker(robot_frame, TOTAL_INTERVALS, INTERVAL_LENGTH, SKIP_INTERVAL)
+wall_tracker = WallTraker(robot_frame, TOTAL_INTERVALS, INTERVAL_LENGTH, SKIP_INTERVAL, MAX_HUMMING_DISTANCE, DEMO_VIDEO)
 # Initialize the counter
 position = -1  # The current interval
 lost_count = 0  # The number of times the robot lost the wall

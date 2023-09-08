@@ -2,7 +2,7 @@
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-07 18:08:30
+LastEditTime : 2023-09-08 19:06:32
 FilePath     : /WallFollowing_Lab_Corner_2/WallTraker.py
 Description  : Wall traker of the robot
 """
@@ -13,11 +13,6 @@ from State import State
 import numpy as np
 import math
 import cv2
-
-### Constants ###
-DEMO_VIDEO = "corner.mp4"  # The path to the demo video
-MIN_NUM_MATCHES = 10  # The minimum number of matches to be considered a match
-λ = 10  # The weight of smoothing the y ratio
 
 ### Debug Constants ###
 debug_dynamic_gain = []  # The dynamic gain of y ratio
@@ -30,6 +25,10 @@ class WallTraker:
         total_interval: int,
         interval_length: int,
         skip_interval: int,
+        max_humming_distance: int = 50,
+        demo_video: str = "demo.mp4",
+        min_num_matches: int = 10,
+        λ: int = 10,
     ) -> None:
         self.total_interval = (
             total_interval  # Total number of intervals in the demo video
@@ -38,13 +37,18 @@ class WallTraker:
             interval_length  # Number of frames in a timeline interval
         )
         self.skip_interval = skip_interval  # Interval between donkey and carrot
+        self.max_humming_distance = max_humming_distance  # Max humming distance
         self.accumulated_y_ratio = 1.0  # Accumulated y ratio
         self.total_states: List[State] = []  # A list of all states in the demo video
         self._load_all_states()  # Load all frames from the demo video into a list of states
-        self.robot_state = State(initial_frame)  # Create a state object for the robot
+        self.robot_state = State(initial_frame, self.max_humming_distance)  # Create a state object for the robot
         self.donkey_index = -1  # The index of the donkey state
         self.carrot_index = -1  # The index of the carrot state
         self._find_donkey_carrot_state()  # Find the donkey and carrot state
+        # Previous global variables
+        self.DEMO_VIDEO = demo_video  # Demo video
+        self.MIN_NUM_MATCHES = min_num_matches  # Min number of matches
+        self.λ = λ  # λ
 
     def __str__(self) -> str:
         pass
@@ -56,7 +60,7 @@ class WallTraker:
         return      {*}: None
         """
         # Create a VideoCapture object to read the video file
-        video = cv2.VideoCapture(DEMO_VIDEO)
+        video = cv2.VideoCapture(self.DEMO_VIDEO)
         for index in range(self.total_interval):
             print("Loading interval: " + str(index + 1))
             # Read a frame from the video
@@ -65,7 +69,7 @@ class WallTraker:
             if not ret:
                 raise Exception("Can't receive frame (stream end?). Exiting ...")
             # Create a state object
-            state = State(frame, load=True, interval=index + 1)
+            state = State(frame, self.max_humming_distance, load=True, interval=index + 1)
             self.total_states.append(state)
         video.release()
 
@@ -115,7 +119,7 @@ class WallTraker:
                 print("Discard y ratio: " + str(new_y_ratio))
                 return self.accumulated_y_ratio
             # The dynamic gain is the exponential of the difference
-            dynamic_gain = 1 / math.exp(y_ratio_diff * λ)
+            dynamic_gain = 1 / math.exp(y_ratio_diff * self.λ)
             debug_dynamic_gain.append(dynamic_gain)
             # Calculate the new accumulated y ratio
             self.accumulated_y_ratio = (
@@ -137,7 +141,7 @@ class WallTraker:
         ) = self.robot_state.get_match_coordinate(self.carrot_state)
         # If no match is found, return 0 velocity
         print("num_matches: ", num_matches)
-        if num_matches <= MIN_NUM_MATCHES:
+        if num_matches <= self.MIN_NUM_MATCHES:
             return 0, 1, num_matches, True, 1, debug_dynamic_gain
         # Calculate the average x and y difference
         (
@@ -186,7 +190,7 @@ class WallTraker:
         param       {*} self: -
         return      {*}: None
         """
-        self.robot_state = State(new_frame)
+        self.robot_state = State(new_frame, self.max_humming_distance)
 
     def show_all_frames(self) -> Tuple[np.array, np.array]:
         """

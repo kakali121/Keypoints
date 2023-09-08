@@ -2,7 +2,7 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-07 19:46:50
+LastEditTime : 2023-09-08 19:29:21
 FilePath     : /WallFollowing_Lab_Corner_2/Robot.py
 Description  : This is the class for the robot
 """
@@ -10,6 +10,7 @@ Description  : This is the class for the robot
 ### Import Packages ###
 from Optitrack_dependency.util import quaternion_to_euler_angle_vectorized1
 from Optitrack_dependency.NatNetClient import NatNetClient
+import matplotlib.pyplot as plt
 import socket
 
 ### Constants ###
@@ -18,20 +19,34 @@ gain_ω = -30        #20 40 50
 bound_v = 30
 bound_ω = 15
 ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"
+DEMO_DATA = "./Results/record_data.txt"
 
 
 class Robot:
     def __init__(self, IP_adress: str, connect: bool) -> None:
+        # Connection parameters
         self.IP_adress = IP_adress
         self.connected = False
         self.clientAddress = "192.168.0.66"
         self.optitrackServerAddress = "192.168.0.4"
         self.robot_id = 121
+
+        # Optitrack parameters
         if not self.optitrack_init():
             print("### Optitrack is cannot be initialized ###")
+        self.demo_trace = []
+        fig, self.ax = plt.subplots()
+        self._load_demo_trace()
+
+        # Record data
         self.file = open("./Results/test_data.txt", "w")  # Open the file in write mode
         self.positions = {}
         self.rotations = {}
+        self.x_data = []
+        self.y_data = []
+        self.ln, = self.ax.plot(self.x_data, self.y_data, 'b-')
+        plt.draw()
+        plt.show(block=False)
         if connect:
             self.connect()
 
@@ -56,9 +71,9 @@ class Robot:
 
     def connect(self) -> None:
         """
-        description: Connect to the robot
-        param       {*} self: -
-        return      {*}: None
+        @description: Connect to the robot
+        @param       {*} self: -
+        @return      {*}: None
         """
         self.connected = True
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -66,20 +81,31 @@ class Robot:
         print("### The robot is connected ###")
 
     def _record_location(self) -> None:
+        """
+        @description: Record the location of the robot
+        @param       {*} self: -
+        @return      {*}: None
+        """
+
         if self.robot_id in self.positions:
             x = self.positions[self.robot_id][0]
             y = self.positions[self.robot_id][1]
+            # For plotting
+            self.x_data.append(x)
+            self.y_data.append(y)
+            self.ln.set_data(self.x_data, self.y_data)
+            plt.draw()
             rotation = self.rotations[self.robot_id]
             self.file.write(f"{0:.2f}, {x}, {y}, {rotation}\n")
             print("x:", x, "y:", y, " rotation:", rotation)
 
     def move(self, v: float, ω: float) -> None:
         """
-        description: Move the robot based on the linear and angular velocity
-        param       {*} self: -
-        param       {float} v: linear velocity
-        param       {float} ω: angular velocity
-        return      {*}: None
+        @description: Move the robot based on the linear and angular velocity
+        @param       {*} self: -
+        @param       {float} v: linear velocity
+        @param       {float} ω: angular velocity
+        @return      {*}: None
         """
 
     def move_legacy(self, v: float, ω: float) -> None:
@@ -106,4 +132,30 @@ class Robot:
             self.socket.send(ZERO_COMMAND.encode())
             self.socket.close()
             self.connected = False
+        plt.show(block=True)
         print("### The robot is disconnected ###")
+
+    def _load_demo_trace(self) -> None:
+        try:
+            with open(DEMO_DATA, 'r') as file:
+                for line in file:
+                    # Split the line into values using comma as a delimiter
+                    values = line.split(',')
+                    
+                    # Extract x and y values
+                    x = float(values[1].strip())
+                    y = float(values[2].strip())
+                    
+                    # Append the x, y tuple to the data_points list
+                    self.demo_trace.append((x, y))
+            self._draw_demo_trace()
+        except Exception as e:
+            print("Get exception: ", e)
+
+    def _draw_demo_trace(self):
+        x_vals, y_vals = zip(*self.demo_trace)
+        # Draw the demo trace
+        self.ax.set_xlim(-2, 4)
+        self.ax.set_ylim(-2.5, 2)
+        self.ax.plot(x_vals, y_vals, '-', color='blue', linewidth=2)
+        self.ax.set_title('Trace')

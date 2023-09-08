@@ -14,17 +14,16 @@ import cv2
 
 ### Constants ###
 DESCRIPTOR_FILE_PATH = "side_demo_kpt_des"      # Path to the descriptor files
-MAX_MATCH_DISTANCE = 45                         # The maximum distance between two matched keypoints
-
 
 class State:
     def __init__(
-        self, frame: np.array, load: bool = False, interval: int = None
+        self, frame: np.array, max_humming_distance: int = 50, load: bool = False, interval: int = None
     ) -> None:
         self.frame = frame
         self.temp_frame = frame.copy() # A copy of the frame to be used for drawing
         self.keypoints = None
         self.descriptors = None
+        self.MAX_HUMMING_DISTANCE = max_humming_distance
         if load: self._load_kpt_des(interval) # Load the keypoints and descriptors from the descriptor file
         else: self._extract_kpt_des() # Extract the keypoints and descriptors from the frame
 
@@ -105,7 +104,7 @@ class State:
         matches = self._get_matches(state)
         if matches is None: return None, None, 0
         if filter:
-            matches = [match for match in matches if match.distance < MAX_MATCH_DISTANCE]
+            matches = [match for match in matches if match.distance < self.MAX_HUMMING_DISTANCE]
         query_coordinte, train_coordinate = self._find_match_pair(matches, state)
         if draw_keypoints:
             self._draw_keypoints_pair(query_coordinte, train_coordinate)
