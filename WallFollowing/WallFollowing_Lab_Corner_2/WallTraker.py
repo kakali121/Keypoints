@@ -46,7 +46,8 @@ class WallTraker:
         self.carrot_index = -1  # The index of the carrot state
         self._find_donkey_carrot_state()  # Find the donkey and carrot state
         # Previous global variables
-        self.DEMO_VIDEO = demo_video  # Demo video
+        self.demo_video = demo_video  # Demo video
+        print("demo_video: ", self.demo_video)
         self.MIN_NUM_MATCHES = min_num_matches  # Min number of matches
         self.λ = λ  # λ
 
@@ -60,7 +61,7 @@ class WallTraker:
         return      {*}: None
         """
         # Create a VideoCapture object to read the video file
-        video = cv2.VideoCapture(self.DEMO_VIDEO)
+        video = cv2.VideoCapture(self.demo_video)
         for index in range(self.total_interval):
             print("Loading interval: " + str(index + 1))
             # Read a frame from the video
