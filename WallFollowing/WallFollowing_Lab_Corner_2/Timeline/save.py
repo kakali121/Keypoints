@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
+from tqdm import tqdm
 
-MAX_FRAMES = 5000        # large numbers will cover the whole video
+MAX_FRAMES = 6000        # large numbers will cover the whole video
 # INTERVAL = 12          # 12 frames per inverval 
 INTERVAL = 10
 MAX_MATCH_DISTANCE = 40  # match threshold
@@ -23,29 +24,31 @@ def extract_keypoints(video):
     video_frames = []
     k = 0
     # Loop through the video frames
-    while cap.isOpened() and k < MAX_FRAMES + 1:
-        # Read a frame from the video
-        ret, frame = cap.read()
-        # Check if the frame was successfully read
-        if not ret: continue
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        kpt, des = orb.detectAndCompute(gray, None)
-        if des is None:
-            print("No keypoints/descriptors in frame ", k)
-            continue
-        print("Frame", k)
-        frame_kpt.append(kpt)
-        frame_des.append(des)
-        video_frames.append(frame)
-        k += 1
-        # Wait for Esc key to stop
-        if cv2.waitKey(1) == 27:
-            # De-allocate any associated memory usage
-            cv2.destroyAllWindows()
-            cap.release()
-            break
-    cap.release()
-    return frame_kpt, frame_des, video_frames
+    with tqdm(total=MAX_FRAMES) as pbar:
+        while cap.isOpened() and k < MAX_FRAMES + 1:
+            # Read a frame from the video
+            ret, frame = cap.read()
+            # Check if the frame was successfully read
+            if not ret: continue
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            kpt, des = orb.detectAndCompute(gray, None)
+            if des is None:
+                print("No keypoints/descriptors in frame ", k)
+                continue
+            # print("Frame", k)
+            pbar.update(1)
+            frame_kpt.append(kpt)
+            frame_des.append(des)
+            video_frames.append(frame)
+            k += 1
+            # Wait for Esc key to stop
+            if cv2.waitKey(1) == 27:
+                # De-allocate any associated memory usage
+                cv2.destroyAllWindows()
+                cap.release()
+                break
+        cap.release()
+        return frame_kpt, frame_des, video_frames
 
 
 def save_kpt_des(keypoints, descriptors, filename):

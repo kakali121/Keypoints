@@ -2,7 +2,7 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-09 16:33:21
+LastEditTime : 2023-09-09 16:48:18
 FilePath     : /WallFollowing_Lab_Corner_3/Robot.py
 Description  : This is the class for the robot
 """
