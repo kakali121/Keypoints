@@ -2,8 +2,8 @@
 Author       : Karen Li
 Date         : 2023-08-11 17:45:14
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-07 18:08:01
-FilePath     : /WallFollowing_Lab_Corner_2/Imitate.py
+LastEditTime : 2023-09-09 15:13:35
+FilePath     : /WallFollowing_Lab_Corner_3/Imitate.py
 Description  : Let robot immitate the behavior of the demo
 """
 
@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import Robot
 import math
 import cv2
+import sys
 
 ### Global Variables ###
 IP_ADDRESS = "192.168.0.204"  # IP address of the robot
@@ -25,7 +26,7 @@ STREAMING_URL = "http://192.168.0.204:1234/stream.mjpg"  # Video streaming url
 DEMO_VIDEO = "corner.mp4"  # name of the demo video
 TOTAL_INTERVALS = 600  # Total number of intervals in the demo video
 INTERVAL_LENGTH = 10  # Number of frames in a timeline interval
-SKIP_INTERVAL = 4  # Interval between donkey and carrot
+SKIP_INTERVAL = 3  # Interval between donkey and carrot
 
 MAX_HUMMING_DISTANCE = 50  # Max humming distance
 MIN_NUM_MATCHES = 10  # Min number of matches
@@ -48,6 +49,7 @@ debug_dynamic_gain = []  # The dynamic gain of y ratio
 ### Initialization ###
 # Create a robot object
 myrobot = Robot.Robot(IP_ADDRESS, CONNECT_TO_ROBOT)
+plt.show(block=False)
 # Create a VideoCapture object to read the video stream
 streaming_video = cv2.VideoCapture(STREAMING_URL)
 # Create a wall tracker object
@@ -62,17 +64,7 @@ fps = 20
 out1 = cv2.VideoWriter("./Results/robot.mp4", fourcc, fps, (400, 300))
 out2 = cv2.VideoWriter("./Results/carrot.mp4", fourcc, fps, (400, 300))
 
-
 def plot_speeds():
-    # # Plot v values
-    # plt.figure(0)
-    # plt.plot(V_VALUES)
-    # plt.title('Velocity (v) over Time')
-    # plt.xlabel('Time')
-    # plt.ylabel('Velocity (v)')
-    # plt.grid(True)
-    # plt.savefig("v_plot.pdf")
-
     # Plot ω values with raw ellipse ratio on the same plot
     plt.figure(1)  # Create a new figure window
     plt.plot(ω_VALUES)
@@ -122,7 +114,6 @@ def plot_speeds():
 
     # Now show all figures
     plt.show()
-
 
 ### Main Loop ###
 try:
@@ -177,10 +168,12 @@ try:
             streaming_video.release()
             myrobot.disconnect()
             break
-    # plot_speeds()
     # Close the video writer
     out1.release()
     out2.release()
+    plt.show(block=True)
+    # plot_speeds()
+    sys.exit(0)
 
 
 except (Exception, KeyboardInterrupt) as e:
@@ -189,7 +182,9 @@ except (Exception, KeyboardInterrupt) as e:
     cv2.destroyAllWindows()
     streaming_video.release()
     myrobot.disconnect()
+    plt.show(block=True)
     # plot_speeds()
     # Close the video writer
     out1.release()
     out2.release()
+    sys.exit(0)

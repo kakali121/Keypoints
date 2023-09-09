@@ -2,14 +2,15 @@
 Author       : Karen Li
 Date         : 2023-08-12 14:27:18
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-08 19:06:32
-FilePath     : /WallFollowing_Lab_Corner_2/WallTraker.py
+LastEditTime : 2023-09-09 16:33:40
+FilePath     : /WallFollowing_Lab_Corner_3/WallTraker.py
 Description  : Wall traker of the robot
 """
 
 ### Import Packages ###
 from typing import List, Tuple
 from State import State
+from tqdm import tqdm
 import numpy as np
 import math
 import cv2
@@ -61,8 +62,8 @@ class WallTraker:
         """
         # Create a VideoCapture object to read the video file
         video = cv2.VideoCapture(self.demo_video)
-        for index in range(self.total_interval):
-            print("Loading interval: " + str(index + 1))
+        for index in tqdm(range(self.total_interval)):
+            # print("Loading interval: " + str(index + 1))
             # Read a frame from the video
             video.set(cv2.CAP_PROP_POS_FRAMES, (index + 1) * self.interval_length)
             ret, frame = video.read()

@@ -20,6 +20,8 @@ def receive_rigid_body_frame(robot_id, position, rotation_quaternion):
 
 
 if __name__ == "__main__":
+    print("##### WARNING: This program will overwrite the previous record data #####")
+    input("Press Enter to start recording...")
     clientAddress  = "192.168.0.52"
     optitrackServerAddress = "192.168.0.4"
     robot_id = 121

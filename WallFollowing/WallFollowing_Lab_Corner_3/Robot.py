@@ -2,21 +2,22 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-08 19:29:21
-FilePath     : /WallFollowing_Lab_Corner_2/Robot.py
+LastEditTime : 2023-09-09 16:33:21
+FilePath     : /WallFollowing_Lab_Corner_3/Robot.py
 Description  : This is the class for the robot
 """
 
 ### Import Packages ###
 from Optitrack_dependency.util import quaternion_to_euler_angle_vectorized1
 from Optitrack_dependency.NatNetClient import NatNetClient
+from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 import socket
 
 ### Constants ###
 gain_v = 24         #30 25 24
-gain_ω = -30        #20 40 50
-bound_v = 30
+gain_ω = 40        #20 40 50
+bound_v = 35
 bound_ω = 15
 #24 -53 25 10
 
@@ -29,7 +30,8 @@ class Robot:
         # Connection parameters
         self.IP_adress = IP_adress
         self.connected = False
-        self.clientAddress = "192.168.0.52"
+        # self.clientAddress = "192.168.0.52"
+        self.clientAddress = "192.168.0.66"
         self.optitrackServerAddress = "192.168.0.4"
         self.robot_id = 121
         self.positions = {}
@@ -40,22 +42,33 @@ class Robot:
             print("### Optitrack is cannot be initialized ###")
         print("### Optitrack is initialized ###")
         self.demo_trace = []
-        self.plt = plt
-        fig, self.ax = self.plt.subplots()
+        self.x_data = []
+        self.y_data = []
+        self.file = open("./Results/test_data.txt", "w")  # Open the file in write mode
+        
+
+        # Create figure and axis for plotting
+        fig, self.ax = plt.subplots(figsize=(4, 3))
         self._load_demo_trace()
+        self.ln, = self.ax.plot([], [], 'r-')  # Start with empty data
+        
+        # Initialize the animation
+        self.animation_running = True
+        self.ani = FuncAnimation(fig, self.update, frames=None, interval=5, blit=True)
 
         # Record data
-        self.file = open("./Results/test_data.txt", "w")  # Open the file in write mode
-        self.x_data = [1]
-        self.y_data = [1]
-        self.ln, = self.ax.plot(self.x_data, self.y_data, 'r-')
-        self.plt.draw()
-        self.plt.show(block=False)
         if connect:
             self.connect()
 
     def __str__(self) -> str:
         pass
+
+    def update(self, frame):
+        if self.animation_running:  # Only proceed with updates if this flag is True
+            self._record_location()
+            return self.ln,
+        else:
+            return self.ln,
 
     def optitrack_init(self) -> None:
         streaming_client = NatNetClient()
@@ -90,15 +103,13 @@ class Robot:
         @param       {*} self: -
         @return      {*}: None
         """
-
         if self.robot_id in self.positions:
             x = self.positions[self.robot_id][0]
             y = self.positions[self.robot_id][1]
             # For plotting
-            self.x_data.append(1)
-            self.y_data.append(1)
+            self.x_data.append(x)
+            self.y_data.append(y)
             self.ln.set_data(self.x_data, self.y_data)
-            self.plt.draw()
             rotation = self.rotations[self.robot_id]
             self.file.write(f"{0:.2f}, {x}, {y}, {rotation}\n")
             print("x:", x, "y:", y, " rotation:", rotation)
@@ -125,6 +136,7 @@ class Robot:
             print("@sending: ", command)
         else:
             print("@debug: ", command)
+        # self.socket.send(ZERO_COMMAND.encode())
 
     def disconnect(self) -> None:
         """
@@ -136,7 +148,7 @@ class Robot:
             self.socket.send(ZERO_COMMAND.encode())
             self.socket.close()
             self.connected = False
-        self.plt.show(block=True)
+        self.animation_running = False  # Stop the animation updates
         print("### The robot is disconnected ###")
 
     def _load_demo_trace(self) -> None:
@@ -152,6 +164,8 @@ class Robot:
                     
                     # Append the x, y tuple to the data_points list
                     self.demo_trace.append((x, y))
+                # Trim demo trace
+                self.demo_trace = self.demo_trace[:7000]
             self._draw_demo_trace()
         except Exception as e:
             print("Get exception: ", e)
@@ -159,6 +173,6 @@ class Robot:
     def _draw_demo_trace(self):
         x_vals, y_vals = zip(*self.demo_trace)
         # Draw the demo trace
-        self.ax.set_xlim(-2, 4)
-        self.ax.set_ylim(-2.5, 2)
+        self.ax.set_xlim(-2, 5)
+        self.ax.set_ylim(-3, 2)
         self.ax.plot(x_vals, y_vals, '-', color='blue', linewidth=2)
