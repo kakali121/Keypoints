@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 import socket
 
 ### Constants ###
-gain_v = 24         #30 25 24
-gain_ω = 40        #20 40 50
-bound_v = 35
-bound_ω = 15
+gain_v = 28        #30 25 24
+gain_ω = -35        #20 40 50
+bound_v = 22
+bound_ω = 16
 #24 -53 25 10
 
 ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"
@@ -30,8 +30,8 @@ class Robot:
         # Connection parameters
         self.IP_adress = IP_adress
         self.connected = False
-        # self.clientAddress = "192.168.0.52"
-        self.clientAddress = "192.168.0.66"
+        self.clientAddress = "192.168.0.52"
+        # self.clientAddress = "192.168.0.66"
         self.optitrackServerAddress = "192.168.0.4"
         self.robot_id = 121
         self.positions = {}
@@ -128,6 +128,7 @@ class Robot:
         pwm = [0, 0]
         v = 0 if -bound_v < v < bound_v else min(max(v, -bound_v), bound_v)
         ω = 0 if -bound_ω < ω < bound_ω else min(max(ω, -bound_ω), bound_ω)
+        ω = -ω if v < 0 else ω
         pwm[0] = int(gain_v * v + gain_ω * ω)  # For left wheel
         pwm[1] = int(gain_v * v - gain_ω * ω)  # For right wheel
         command = "CMD_MOTOR#%d#%d#%d#%d\n" % (pwm[0], pwm[0], pwm[1], pwm[1])

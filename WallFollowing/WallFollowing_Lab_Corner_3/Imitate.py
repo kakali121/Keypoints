@@ -30,7 +30,7 @@ SKIP_INTERVAL = 3  # Interval between donkey and carrot
 
 MAX_HUMMING_DISTANCE = 50  # Max humming distance
 MIN_NUM_MATCHES = 10  # Min number of matches
-λ = 10  # λ of the dynamic gain
+λ = 8  # λ of the dynamic gain
 
 V_GAIN = 3  # Gain of velocity
 W_GAIN = 400  # Gain of angular velocity
@@ -141,7 +141,7 @@ try:
         NUM_MATCH.append(num_match)
         RAW_ω.append(raw_ellipse_ratio)
 
-        if abs(x_diff) < 10 and not lost:  # If the robot is close enough to the carrot
+        if abs(x_diff) < 15 and not lost:  # If the robot is close enough to the carrot
             position = wall_tracker.next_carrot()  # Go to the next carrot
             lost_count = 0  # Reset the lost count
         if math.isnan(v) or math.isnan(ω):  # If the velocity is NaN, stop the robot
