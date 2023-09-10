@@ -142,7 +142,8 @@ if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints(VIDEO)
     for i in range(int(len(frames)/INTERVAL)):
         print("Interval", i+1)
-        analyze_kpt_des(frames, frame_kpt, frame_des, "../side_demo_kpt_des/side_demo_kpt_des%d.yml"%(i+1), "../side_demo/side_demo%d.mp4"%(i+1))
+        temp_path = "../side_demo_kpt_des_" + INTERVAL + "_" + MAX_MATCH_DISTANCE + "/side_demo_kpt_des%d.yml"%(i+1)
+        analyze_kpt_des(frames, frame_kpt, frame_des, temp_path, "../side_demo/side_demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
         frame_des = frame_des[-(len(frame_des)-INTERVAL):]
