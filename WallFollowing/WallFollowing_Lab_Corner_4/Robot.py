@@ -16,9 +16,9 @@ import socket
 
 ### Constants ###
 gain_v = 28        #30 25 24
-gain_ω = -35        #20 40 50
+gain_ω = -37        #20 40 50
 bound_v = 22
-bound_ω = 16
+bound_ω = 18
 #24 -53 25 10
 
 ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"

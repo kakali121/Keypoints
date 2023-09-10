@@ -30,7 +30,7 @@ SKIP_INTERVAL = 3  # Interval between donkey and carrot
 
 MAX_HUMMING_DISTANCE = 50  # Max humming distance
 MIN_NUM_MATCHES = 10  # Min number of matches
-λ = 8  # λ of the dynamic gain
+λ = 7  # λ of the dynamic gain
 
 V_GAIN = 3  # Gain of velocity
 W_GAIN = 400  # Gain of angular velocity
@@ -104,13 +104,13 @@ def plot_speeds():
     plt.savefig("./Results/raw_ellipse_plot.pdf")
 
     # Plot dynamic gain
-    plt.figure(4)  # Create another new figure window
-    plt.plot(debug_dynamic_gain)
-    plt.title("Dynamic Gain over Time")
-    plt.xlabel("Time")
-    plt.ylabel("Dynamic Gain")
-    plt.grid(True)
-    plt.savefig("./Results/dynamic_gain_plot.pdf")
+    # plt.figure(4)  # Create another new figure window
+    # plt.plot(debug_dynamic_gain)
+    # plt.title("Dynamic Gain over Time")
+    # plt.xlabel("Time")
+    # plt.ylabel("Dynamic Gain")
+    # plt.grid(True)
+    # plt.savefig("./Results/dynamic_gain_plot.pdf")
 
     # Now show all figures
     plt.show()
@@ -172,7 +172,7 @@ try:
     out1.release()
     out2.release()
     plt.show(block=True)
-    # plot_speeds()
+    plot_speeds()
     sys.exit(0)
 
 
@@ -183,7 +183,7 @@ except (Exception, KeyboardInterrupt) as e:
     streaming_video.release()
     myrobot.disconnect()
     plt.show(block=True)
-    # plot_speeds()
+    plot_speeds()
     # Close the video writer
     out1.release()
     out2.release()
