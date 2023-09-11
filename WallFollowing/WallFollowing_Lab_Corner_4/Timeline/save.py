@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
+import os
 from tqdm import tqdm
 
-MAX_FRAMES = 6000        # large numbers will cover the whole video
+MAX_FRAMES = 1000        # large numbers will cover the whole video
 # INTERVAL = 12          # 12 frames per inverval 
-INTERVAL = 10
+INTERVAL = 20
 MAX_MATCH_DISTANCE = 40  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -66,7 +67,7 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
     # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 10
-    out = cv2.VideoWriter(video, fourcc, fps, (400, 300))
+    # out = cv2.VideoWriter(video, fourcc, fps, (400, 300))
 
     kpts_cur, des_cur = [], []
     kpts_fin, des_fin = [], []
@@ -127,7 +128,7 @@ def analyze_kpt_des(frame, keypoints, descriptors, filename, video):
             frame[k] = cv2.line(frame[k], pt1, pt2, (0, 0, 255), thickness=2)
 
         cv2.imshow("frame", frame[k])
-        out.write(frame[k])
+        # out.write(frame[k])
 
         if k == 0:
             save_kpt_des(kpts_fin, des_fin, filename)
@@ -142,7 +143,9 @@ if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints(VIDEO)
     for i in range(int(len(frames)/INTERVAL)):
         print("Interval", i+1)
-        temp_path = "../side_demo_kpt_des_" + INTERVAL + "_" + MAX_MATCH_DISTANCE + "/side_demo_kpt_des%d.yml"%(i+1)
+        if os.path.exists("../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE)) == False:
+            os.mkdir("../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE))
+        temp_path = "../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE) + "/side_demo_kpt_des%d.yml"%(i+1)
         analyze_kpt_des(frames, frame_kpt, frame_des, temp_path, "../side_demo/side_demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
