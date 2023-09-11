@@ -29,7 +29,7 @@ INTERVAL_LENGTH = 10  # Number of frames in a timeline interval
 SKIP_INTERVAL = 3  # Interval between donkey and carrot
 
 MAX_HUMMING_DISTANCE = 45  # Max humming distance
-MIN_NUM_MATCHES = 10  # Min number of matches
+MIN_NUM_MATCHES = 5  # Min number of matches
 λ = 7  # λ of the dynamic gain
 
 V_GAIN = 3  # Gain of velocity

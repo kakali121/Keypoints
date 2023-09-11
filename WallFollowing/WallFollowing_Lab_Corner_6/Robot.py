@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 import socket
 
 ### Constants ###
-gain_v = 29        #30 25 24
+gain_v = 28        #30 25 24
 gain_ω = -35        #20 40 50
 bound_v = 22
-bound_ω = 16
+bound_ω = 22
 #24 -53 25 10
 
 ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"
@@ -30,7 +30,7 @@ class Robot:
         # Connection parameters
         self.IP_adress = IP_adress
         self.connected = False
-        self.clientAddress = "192.168.0.52"
+        self.clientAddress = "192.168.0.6"
         # self.clientAddress = "192.168.0.66"
         self.optitrackServerAddress = "192.168.0.4"
         self.robot_id = 121
