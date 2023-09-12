@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 MAX_FRAMES = 1000        # large numbers will cover the whole video
 # INTERVAL = 12          # 12 frames per inverval 
-INTERVAL = 20
+INTERVAL = 10
 MAX_MATCH_DISTANCE = 40  # match threshold
 
 # Create an ORB object and detect keypoints and descriptors in the template
@@ -14,7 +14,7 @@ orb = cv2.ORB_create(nfeatures=1000)
 # Create a brute-force matcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-VIDEO = "../corner.mp4"
+VIDEO = "test_corner.mp4"
 # VIDEO = "./Videos/lab_corner.mp4"
 
 
@@ -144,9 +144,9 @@ if __name__ == "__main__":
     frame_kpt, frame_des, frames = extract_keypoints(VIDEO)
     for i in range(int(len(frames)/INTERVAL)):
         print("Interval", i+1)
-        if os.path.exists("../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE)) == False:
-            os.mkdir("../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE))
-        temp_path = "../side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE) + "/side_demo_kpt_des%d.yml"%(i+1)
+        if os.path.exists("side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE)) == False:
+            os.mkdir("side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE))
+        temp_path = "side_demo_kpt_des_" + str(INTERVAL) + "_" + str(MAX_MATCH_DISTANCE) + "/side_demo_kpt_des%d.yml"%(i+1)
         analyze_kpt_des(frames, frame_kpt, frame_des, temp_path, "../side_demo/side_demo%d.mp4"%(i+1))
         frames = frames[-(len(frames)-INTERVAL):]
         frame_kpt = frame_kpt[-(len(frame_kpt)-INTERVAL):]
