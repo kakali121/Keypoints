@@ -2,8 +2,8 @@
 Author       : Hanqing Qi
 Date         : 2023-08-12 10:39:47
 LastEditors  : Hanqing Qi
-LastEditTime : 2023-09-11 16:41:20
-FilePath     : /WallFollowing_Lab_Corner_Source/Robot.py
+LastEditTime : 2023-09-20 16:05:20
+FilePath     : /undefined/Users/hanqingqi/Library/CloudStorage/Dropbox/Keypoints/WallFollowing/WF_Source/Robot.py
 Description  : This is the class for the robot
 """
 
@@ -24,10 +24,11 @@ OPT_CLIENT_ADDRESS = "192.168.0.52"
 
 ZERO_COMMAND = "CMD_MOTOR#0#0#0#0\n"
 DEMO_DATA = "./Results/record_data.txt"
+INIT_OPTITRACK = False
 
 
 class Robot:
-    def __init__(self, IP_adress: str, connect: bool, show_tace: bool, savepath: str) -> None:
+    def __init__(self, IP_adress: str, connect: bool, show_trace: bool, savepath: str) -> None:
         # Connection parameters
         self.IP_adress = IP_adress
         self.connected = False
@@ -38,15 +39,19 @@ class Robot:
         self.rotations = {}
 
         # Optitrack parameters
-        if not self.optitrack_init():
-            print("### Optitrack is cannot be initialized ###")
-        print("### Optitrack is initialized ###")
-        self.demo_trace = []
-        self.x_data = []
-        self.y_data = []
-        self.file = open(savepath + "/test_data.txt", "w")  # Open the file for writing
+        if INIT_OPTITRACK:
+            if not self.optitrack_init():
+                print("### Optitrack is cannot be initialized ###")
+            print("### Optitrack is initialized ###")
+            self.demo_trace = []
+            self.x_data = []
+            self.y_data = []
+            self.file = open(savepath + "/test_data.txt", "w")  # Open the file for writing
+        else:
+            show_trace = False
+            print("### Optitrack is disabled - Trace plot automatically set of false ###")
 
-        if show_tace:
+        if show_trace:
         # Create figure and axis for plotting
             fig, self.ax = plt.subplots(figsize=(4, 3))
             self._load_demo_trace()
